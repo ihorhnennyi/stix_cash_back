@@ -1,8 +1,21 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import { ApiBody, ApiOkResponse, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  ApiBearerAuth,
+  ApiBody,
+  ApiOkResponse,
+  ApiOperation,
+  ApiTags,
+} from '@nestjs/swagger';
 import { AuthService } from '../auth/auth.service';
+import { JwtAuthGuard } from '../auth/guard/jwt-auth.guard';
 import { AdminService } from './admin.service';
 import { LoginAdminDto } from './dto/login-admin.dto';
+
+interface JwtPayload {
+  sub: string;
+  email: string;
+  roles: string[];
+}
 
 @ApiTags('Admin Auth')
 @Controller('admin/auth')
@@ -60,5 +73,26 @@ export class AdminAuthController {
   })
   async refresh(@Body() body: { refreshToken: string }) {
     return this.authService.refreshTokens(body.refreshToken);
+  }
+
+  @Get('profile')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: 'Профиль администратора',
+    description: 'Получение данных текущего администратора по access токену.',
+  })
+  @ApiOkResponse({
+    description: 'Информация о текущем администраторе',
+    schema: {
+      example: {
+        sub: '665ff3d63bd098dd81fd9e65',
+        email: 'admin@gmail.com',
+        roles: ['admin'],
+      },
+    },
+  })
+  profile(@Req() req: { user: JwtPayload }) {
+    return req.user;
   }
 }
