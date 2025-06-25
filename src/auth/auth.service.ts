@@ -1,24 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-import { AdminDocument } from '../admin/schema/admin.schema';
-
-interface JwtPayload {
-  sub: string;
-  email: string;
-  roles: string[];
-}
+import { JwtPayload } from '../common/types/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
   constructor(private jwtService: JwtService) {}
 
-  async generateTokens(admin: AdminDocument) {
-    const payload: JwtPayload = {
-      sub: (admin._id as { toString(): string }).toString(),
-      email: admin.email,
-      roles: admin.roles,
-    };
-
+  async generateTokens(payload: JwtPayload) {
     const accessToken = await this.jwtService.signAsync(payload, {
       expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
     });
@@ -35,8 +23,8 @@ export class AuthService {
 
   async refreshTokens(refreshToken: string) {
     try {
-      const payload: JwtPayload =
-        await this.jwtService.verifyAsync(refreshToken);
+      const payload =
+        await this.jwtService.verifyAsync<JwtPayload>(refreshToken);
 
       const newPayload: JwtPayload = {
         sub: payload.sub,

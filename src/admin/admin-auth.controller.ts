@@ -46,7 +46,14 @@ export class AdminAuthController {
       dto.email,
       dto.password,
     );
-    return this.authService.generateTokens(admin);
+
+    const payload: JwtPayload = {
+      sub: admin._id.toString(),
+      email: admin.email,
+      roles: admin.roles,
+    };
+
+    return this.authService.generateTokens(payload);
   }
 
   @Post('refresh')
