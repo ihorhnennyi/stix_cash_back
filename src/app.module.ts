@@ -3,6 +3,9 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { validationSchema } from './config/validation';
 
+import { AdminModule } from './admin/admin.module';
+import { AuthModule } from './auth/auth.module';
+
 @Module({
   imports: [
     ConfigModule.forRoot({
@@ -15,6 +18,9 @@ import { validationSchema } from './config/validation';
         uri: configService.get<string>('MONGODB_URI'),
       }),
     }),
+
+    AdminModule,
+    AuthModule,
   ],
 })
 export class AppModule {}
