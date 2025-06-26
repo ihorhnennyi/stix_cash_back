@@ -1,22 +1,19 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import {
-  ApiBearerAuth,
   ApiBody,
+  ApiForbiddenResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { AuthService } from '../auth/auth.service';
-import { JwtAuthGuard } from '../auth/guard/jwt-auth.guard';
+import { Auth } from '../common/decorators/auth.decorator';
+import { User } from '../common/decorators/user.decorator';
+import { JwtPayload } from '../common/types/jwt-payload.interface';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import { UserService } from './user.service';
-
-interface JwtPayload {
-  sub: string;
-  email: string;
-  roles: string[];
-}
 
 @ApiTags('User Auth')
 @Controller('user/auth')
@@ -33,7 +30,7 @@ export class UserController {
   })
   @ApiBody({ type: CreateUserDto })
   @ApiOkResponse({
-    description: 'Успешная регистрация',
+    description: 'Пользователь успешно зарегистрирован',
     schema: {
       example: {
         message: 'Пользователь успешно зарегистрирован',
@@ -61,7 +58,7 @@ export class UserController {
     },
   })
   async login(@Body() dto: LoginUserDto) {
-    const user = await this.userService.validateUser(dto.email, dto.password); // тут TS уже знает, что вернёт UserDocument
+    const user = await this.userService.validateUser(dto.email, dto.password);
 
     const payload: JwtPayload = {
       sub: user._id.toHexString(),
@@ -98,8 +95,7 @@ export class UserController {
   }
 
   @Get('profile')
-  @UseGuards(JwtAuthGuard)
-  @ApiBearerAuth()
+  @Auth('user')
   @ApiOperation({
     summary: 'Профиль пользователя',
     description: 'Получение информации о текущем пользователе',
@@ -114,7 +110,9 @@ export class UserController {
       },
     },
   })
-  profile(@Req() req: { user: JwtPayload }) {
-    return req.user;
+  @ApiUnauthorizedResponse({ description: 'Неавторизован' })
+  @ApiForbiddenResponse({ description: 'Недостаточно прав' })
+  profile(@User() user: JwtPayload) {
+    return user;
   }
 }

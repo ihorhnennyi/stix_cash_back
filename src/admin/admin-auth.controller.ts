@@ -1,21 +1,19 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post } from '@nestjs/common';
 import {
   ApiBearerAuth,
   ApiBody,
+  ApiForbiddenResponse,
   ApiOkResponse,
   ApiOperation,
   ApiTags,
+  ApiUnauthorizedResponse,
 } from '@nestjs/swagger';
 import { AuthService } from '../auth/auth.service';
-import { JwtAuthGuard } from '../auth/guard/jwt-auth.guard';
+import { Auth } from '../common/decorators/auth.decorator';
+import { User } from '../common/decorators/user.decorator';
+import { JwtPayload } from '../common/types/jwt-payload.interface';
 import { AdminService } from './admin.service';
 import { LoginAdminDto } from './dto/login-admin.dto';
-
-interface JwtPayload {
-  sub: string;
-  email: string;
-  roles: string[];
-}
 
 @ApiTags('Admin Auth')
 @Controller('admin/auth')
@@ -83,7 +81,7 @@ export class AdminAuthController {
   }
 
   @Get('profile')
-  @UseGuards(JwtAuthGuard)
+  @Auth('admin')
   @ApiBearerAuth()
   @ApiOperation({
     summary: 'Профиль администратора',
@@ -99,7 +97,9 @@ export class AdminAuthController {
       },
     },
   })
-  profile(@Req() req: { user: JwtPayload }) {
-    return req.user;
+  @ApiUnauthorizedResponse({ description: 'Неавторизован' })
+  @ApiForbiddenResponse({ description: 'Недостаточно прав' })
+  profile(@User() user: JwtPayload) {
+    return user;
   }
 }
