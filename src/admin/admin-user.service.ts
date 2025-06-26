@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
-import { Model } from 'mongoose';
+import { FilterQuery, Model } from 'mongoose';
 import { User, UserDocument } from '../user/schema/user.schema';
 import { FilterUserDto } from './dto/filter-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
@@ -8,16 +8,12 @@ import { UpdateUserDto } from './dto/update-user.dto';
 @Injectable()
 export class AdminUserService {
   constructor(
-    @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
+    @InjectModel(User.name)
+    private readonly userModel: Model<UserDocument>,
   ) {}
 
-  async getAllUsers(filter?: FilterUserDto): Promise<{
-    data: UserDocument[];
-    total: number;
-    page: number;
-    limit: number;
-  }> {
-    const query: Record<string, any> = {};
+  async getAllUsers(filter?: FilterUserDto): Promise<UserDocument[]> {
+    const query: FilterQuery<UserDocument> = {};
 
     if (filter?.email) {
       query.email = { $regex: filter.email, $options: 'i' };
@@ -31,29 +27,51 @@ export class AdminUserService {
       query.isVerified = filter.isVerified;
     }
 
-    const page = filter?.page && filter.page > 0 ? filter.page : 1;
-    const limit = filter?.limit && filter.limit > 0 ? filter.limit : 20;
-    const skip = (page - 1) * limit;
+    if (
+      typeof filter?.balanceFrom === 'number' ||
+      typeof filter?.balanceTo === 'number'
+    ) {
+      const balanceQuery: Partial<Record<'$gte' | '$lte', number>> = {};
 
-    const sortBy = filter?.sortBy ?? 'createdAt';
-    const sortOrder = filter?.sortOrder === 'asc' ? 1 : -1;
+      if (typeof filter.balanceFrom === 'number') {
+        balanceQuery.$gte = filter.balanceFrom;
+      }
+      if (typeof filter.balanceTo === 'number') {
+        balanceQuery.$lte = filter.balanceTo;
+      }
 
-    const [data, total] = await Promise.all([
-      this.userModel
-        .find(query)
-        .sort({ [sortBy]: sortOrder })
-        .skip(skip)
-        .limit(limit)
-        .lean(),
-      this.userModel.countDocuments(query),
-    ]);
+      query.balance = balanceQuery;
+    }
 
-    return {
-      data,
-      total,
-      page,
-      limit,
-    };
+    if (filter?.createdFrom || filter?.createdTo) {
+      const createdAtQuery: Partial<Record<'$gte' | '$lte', Date>> = {};
+
+      if (filter.createdFrom) {
+        createdAtQuery.$gte = new Date(filter.createdFrom);
+      }
+      if (filter.createdTo) {
+        createdAtQuery.$lte = new Date(filter.createdTo);
+      }
+
+      query.createdAt = createdAtQuery;
+    }
+
+    const sort: Record<string, 1 | -1> = {};
+    if (filter?.sortBy) {
+      sort[filter.sortBy] = filter.sortOrder === 'asc' ? 1 : -1;
+    } else {
+      sort.createdAt = -1;
+    }
+
+    const page = filter?.page ?? 1;
+    const limit = filter?.limit ?? 20;
+
+    return this.userModel
+      .find(query)
+      .sort(sort)
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean();
   }
 
   async getUserById(id: string): Promise<UserDocument> {

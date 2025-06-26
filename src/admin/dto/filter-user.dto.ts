@@ -1,6 +1,6 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsBooleanString, IsIn, IsOptional, IsString } from 'class-validator';
+import { IsBooleanString, IsOptional, IsString } from 'class-validator';
 
 export class FilterUserDto {
   @ApiPropertyOptional({
@@ -31,8 +31,40 @@ export class FilterUserDto {
   isVerified?: boolean;
 
   @ApiPropertyOptional({
+    example: 100,
+    description: 'Минимальный баланс пользователя',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: string }) => parseFloat(value))
+  balanceFrom?: number;
+
+  @ApiPropertyOptional({
+    example: 1000,
+    description: 'Максимальный баланс пользователя',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: string }) => parseFloat(value))
+  balanceTo?: number;
+
+  @ApiPropertyOptional({
+    example: '2024-01-01',
+    description: 'Дата регистрации: с',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: string }) => new Date(value))
+  createdFrom?: Date;
+
+  @ApiPropertyOptional({
+    example: '2024-12-31',
+    description: 'Дата регистрации: по',
+  })
+  @IsOptional()
+  @Transform(({ value }: { value: string }) => new Date(value))
+  createdTo?: Date;
+
+  @ApiPropertyOptional({
     example: '1',
-    description: 'Страница (по умолчанию 1)',
+    description: 'Страница (пагинация)',
   })
   @IsOptional()
   @Transform(({ value }: { value: string }) => parseInt(value, 10))
@@ -56,9 +88,9 @@ export class FilterUserDto {
 
   @ApiPropertyOptional({
     example: 'desc',
-    description: 'Порядок сортировки (asc | desc)',
+    description: 'Направление сортировки (asc | desc)',
   })
   @IsOptional()
-  @IsIn(['asc', 'desc'])
+  @IsString()
   sortOrder?: 'asc' | 'desc';
 }
