@@ -11,7 +11,12 @@ export class AdminUserService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
   ) {}
 
-  async getAllUsers(filter?: FilterUserDto): Promise<UserDocument[]> {
+  async getAllUsers(filter?: FilterUserDto): Promise<{
+    data: UserDocument[];
+    total: number;
+    page: number;
+    limit: number;
+  }> {
     const query: Record<string, any> = {};
 
     if (filter?.email) {
@@ -26,7 +31,29 @@ export class AdminUserService {
       query.isVerified = filter.isVerified;
     }
 
-    return this.userModel.find(query).lean();
+    const page = filter?.page && filter.page > 0 ? filter.page : 1;
+    const limit = filter?.limit && filter.limit > 0 ? filter.limit : 20;
+    const skip = (page - 1) * limit;
+
+    const sortBy = filter?.sortBy ?? 'createdAt';
+    const sortOrder = filter?.sortOrder === 'asc' ? 1 : -1;
+
+    const [data, total] = await Promise.all([
+      this.userModel
+        .find(query)
+        .sort({ [sortBy]: sortOrder })
+        .skip(skip)
+        .limit(limit)
+        .lean(),
+      this.userModel.countDocuments(query),
+    ]);
+
+    return {
+      data,
+      total,
+      page,
+      limit,
+    };
   }
 
   async getUserById(id: string): Promise<UserDocument> {
