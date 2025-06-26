@@ -2,17 +2,23 @@ import { Module, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from '../auth/auth.module';
+import { User, UserSchema } from '../user/schema/user.schema'; // 👈 Добавить
 import { AdminAuthController } from './admin-auth.controller';
+import { AdminUserController } from './admin-user.controller';
+import { AdminUserService } from './admin-user.service';
 import { AdminService } from './admin.service';
 import { Admin, AdminSchema } from './schema/admin.schema';
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: Admin.name, schema: AdminSchema }]),
+    MongooseModule.forFeature([
+      { name: Admin.name, schema: AdminSchema },
+      { name: User.name, schema: UserSchema }, // 👈 Добавить
+    ]),
     AuthModule,
   ],
-  controllers: [AdminAuthController],
-  providers: [AdminService],
+  controllers: [AdminAuthController, AdminUserController],
+  providers: [AdminService, AdminUserService],
   exports: [AdminService],
 })
 export class AdminModule implements OnModuleInit {
