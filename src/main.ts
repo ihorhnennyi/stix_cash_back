@@ -1,9 +1,23 @@
+import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.enableCors({
+    origin: 'http://localhost:5173',
+    credentials: true,
+  });
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }),
+  );
 
   const config = new DocumentBuilder()
     .setTitle('💰 Stix Cash API')
@@ -35,9 +49,9 @@ async function bootstrap() {
   const PORT = process.env.PORT ?? 3000;
   await app.listen(PORT);
 
-  console.log(`🚀 Stix Cash Backend is running!`);
-  console.log(`👉 API available at: http://localhost:${PORT}/api`);
-  console.log(`👉 Swagger Docs:    http://localhost:${PORT}/api/docs`);
+  console.log(`Stix Cash Backend is running!`);
+  console.log(`API available at: http://localhost:${PORT}/api`);
+  console.log(`Swagger Docs:    http://localhost:${PORT}/api/docs`);
 }
 
 bootstrap().catch((err) => {
