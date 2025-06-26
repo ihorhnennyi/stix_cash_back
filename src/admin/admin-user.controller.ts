@@ -1,7 +1,16 @@
-import { Body, Controller, Delete, Get, Param, Patch } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Query,
+} from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Auth } from '../common/decorators/auth.decorator';
 import { AdminUserService } from './admin-user.service';
+import { FilterUserDto } from './dto/filter-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @ApiTags('Admin - Users')
@@ -12,9 +21,9 @@ export class AdminUserController {
   constructor(private readonly adminUserService: AdminUserService) {}
 
   @Get()
-  @ApiOperation({ summary: 'Получить всех пользователей' })
-  getAll() {
-    return this.adminUserService.getAllUsers();
+  @ApiOperation({ summary: 'Получить всех пользователей (с фильтрами)' })
+  getAll(@Query() filter: FilterUserDto) {
+    return this.adminUserService.getAllUsers(filter);
   }
 
   @Get(':id')

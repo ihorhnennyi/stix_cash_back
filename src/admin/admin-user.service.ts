@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
 import { User, UserDocument } from '../user/schema/user.schema';
+import { FilterUserDto } from './dto/filter-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
@@ -10,8 +11,22 @@ export class AdminUserService {
     @InjectModel(User.name) private readonly userModel: Model<UserDocument>,
   ) {}
 
-  async getAllUsers(): Promise<UserDocument[]> {
-    return this.userModel.find().lean();
+  async getAllUsers(filter?: FilterUserDto): Promise<UserDocument[]> {
+    const query: Record<string, any> = {};
+
+    if (filter?.email) {
+      query.email = { $regex: filter.email, $options: 'i' };
+    }
+
+    if (filter?.role) {
+      query.roles = filter.role;
+    }
+
+    if (filter?.isVerified !== undefined) {
+      query.isVerified = filter.isVerified;
+    }
+
+    return this.userModel.find(query).lean();
   }
 
   async getUserById(id: string): Promise<UserDocument> {
