@@ -2,6 +2,7 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { drive_v3, google } from 'googleapis';
 import { join } from 'path';
+import { Readable } from 'stream';
 
 @Injectable()
 export class GoogleDriveService implements OnModuleInit {
@@ -56,23 +57,69 @@ export class GoogleDriveService implements OnModuleInit {
 
     const folderId = folder.data.id!;
     console.log('[GoogleDrive] Folder created:', folderId);
+    return folderId;
+  }
 
-    await this.drive.permissions.create({
-      fileId: folderId,
+  async getOrCreateUserFolder(
+    userId: string,
+    parentFolderId: string,
+    existingFolderId?: string,
+  ): Promise<string> {
+    if (existingFolderId) {
+      try {
+        const file = await this.drive.files.get({
+          fileId: existingFolderId,
+          fields: 'id',
+        });
+
+        if (file.data.id) {
+          return file.data.id;
+        }
+      } catch {
+        console.warn(
+          `[GoogleDrive] Папка с ID ${existingFolderId} не найдена или удалена — создаём заново`,
+        );
+      }
+    }
+
+    return this.createUserFolder(userId, parentFolderId);
+  }
+
+  async uploadFileToUserFolder(
+    file: {
+      originalname: string;
+      mimetype: string;
+      buffer: Buffer;
+    },
+    folderId: string,
+  ): Promise<{ id: string; webViewLink: string }> {
+    const bufferStream = new Readable();
+    bufferStream.push(file.buffer);
+    bufferStream.push(null); // завершение стрима
+
+    const res = await this.drive.files.create({
       requestBody: {
-        type: 'user',
-        role: 'writer',
-        emailAddress: this.configService.get<string>('GOOGLE_DRIVE_OWNER'),
+        name: file.originalname,
+        mimeType: file.mimetype,
+        parents: [folderId],
       },
+      media: {
+        mimeType: file.mimetype,
+        body: bufferStream,
+      },
+      fields: 'id, webViewLink',
     });
 
-    return folderId;
+    return {
+      id: res.data.id!,
+      webViewLink: res.data.webViewLink!,
+    };
   }
 
   async deleteAllFolders(): Promise<void> {
     const res = await this.drive.files.list({
       q: "mimeType='application/vnd.google-apps.folder' and trashed = false",
-      fields: 'files(id, name)',
+      fields: 'files(id, name, owners)',
     });
 
     const folders = res.data.files ?? [];
@@ -82,22 +129,37 @@ export class GoogleDriveService implements OnModuleInit {
       return;
     }
 
-    console.log(`Удаление ${folders.length} папок...`);
+    console.log(`Найдено ${folders.length} папок. Начинаем удаление...`);
 
     for (const folder of folders) {
+      const isOwnedByServiceAccount = folder.owners?.some((owner) =>
+        owner.emailAddress?.includes('@gserviceaccount.com'),
+      );
+
+      if (!isOwnedByServiceAccount) {
+        console.warn(
+          `[GoogleDrive] Пропущена папка без прав: ${folder.name} (${folder.id})`,
+        );
+        continue;
+      }
+
       try {
         await this.drive.files.delete({ fileId: folder.id! });
         console.log(`Удалена папка: ${folder.name} (${folder.id})`);
-      } catch (err) {
-        console.error(
-          `Ошибка при удалении папки ${folder.name}:`,
-          err && typeof err === 'object' && 'message' in err
-            ? (err as { message: string }).message
-            : err,
-        );
+      } catch (err: unknown) {
+        let message = 'Неизвестная ошибка';
+        if (
+          typeof err === 'object' &&
+          err !== null &&
+          'message' in err &&
+          typeof (err as { message?: unknown }).message === 'string'
+        ) {
+          message = (err as { message: string }).message;
+        }
+        console.error(`Ошибка при удалении папки ${folder.name}:`, message);
       }
     }
 
-    console.log('🧼 Очистка завершена');
+    console.log('Очистка завершена');
   }
 }
