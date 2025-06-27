@@ -8,23 +8,30 @@ import { Readable } from 'stream';
 export class GoogleDriveService implements OnModuleInit {
   private drive: drive_v3.Drive;
   private folderId: string | null = null;
+  private serviceAccountEmail: string;
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(private readonly configService: ConfigService) {
+    this.serviceAccountEmail = this.configService.get<string>(
+      'GOOGLE_SERVICE_EMAIL',
+    )!;
+  }
 
-  async onModuleInit() {
+  onModuleInit() {
     const keyPath = join(
       __dirname,
       '../../../',
       this.configService.get<string>('GOOGLE_KEY_FILE') || '',
     );
 
-    const auth = new google.auth.JWT({
+    const auth = new google.auth.GoogleAuth({
       keyFile: keyPath,
       scopes: ['https://www.googleapis.com/auth/drive'],
     });
 
-    await auth.authorize();
-    this.drive = google.drive({ version: 'v3', auth });
+    this.drive = google.drive({
+      version: 'v3',
+      auth,
+    });
   }
 
   createMainFolderIfNotExists(): string {
@@ -95,7 +102,7 @@ export class GoogleDriveService implements OnModuleInit {
   ): Promise<{ id: string; webViewLink: string }> {
     const bufferStream = new Readable();
     bufferStream.push(file.buffer);
-    bufferStream.push(null); // завершение стрима
+    bufferStream.push(null);
 
     const res = await this.drive.files.create({
       requestBody: {
@@ -132,20 +139,36 @@ export class GoogleDriveService implements OnModuleInit {
     console.log(`Найдено ${folders.length} папок. Начинаем удаление...`);
 
     for (const folder of folders) {
-      const isOwnedByServiceAccount = folder.owners?.some((owner) =>
-        owner.emailAddress?.includes('@gserviceaccount.com'),
-      );
-
-      if (!isOwnedByServiceAccount) {
-        console.warn(
-          `[GoogleDrive] Пропущена папка без прав: ${folder.name} (${folder.id})`,
-        );
-        continue;
-      }
+      const folderId = folder.id!;
+      const folderName = folder.name;
 
       try {
-        await this.drive.files.delete({ fileId: folder.id! });
-        console.log(`Удалена папка: ${folder.name} (${folder.id})`);
+        const isOwnedByServiceAccount = folder.owners?.some((owner) =>
+          owner.emailAddress?.includes('@gserviceaccount.com'),
+        );
+
+        if (!isOwnedByServiceAccount) {
+          console.warn(
+            `[GoogleDrive] Папка не принадлежит сервисному аккаунту: ${folderName}`,
+          );
+
+          await this.drive.permissions.create({
+            fileId: folderId,
+            requestBody: {
+              type: 'user',
+              role: 'writer',
+              emailAddress: this.serviceAccountEmail,
+            },
+            fields: 'id',
+          });
+
+          console.log(
+            `[GoogleDrive] Права редактора добавлены к папке: ${folderName}`,
+          );
+        }
+
+        await this.drive.files.delete({ fileId: folderId });
+        console.log(`Удалена папка: ${folderName} (${folderId})`);
       } catch (err: unknown) {
         let message = 'Неизвестная ошибка';
         if (
@@ -156,7 +179,7 @@ export class GoogleDriveService implements OnModuleInit {
         ) {
           message = (err as { message: string }).message;
         }
-        console.error(`Ошибка при удалении папки ${folder.name}:`, message);
+        console.error(`Ошибка при удалении папки ${folderName}:`, message);
       }
     }
 
