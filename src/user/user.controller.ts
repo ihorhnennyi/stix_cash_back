@@ -12,12 +12,17 @@ import { ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Auth } from '../common/decorators/auth.decorator';
 import { User as UserDecorator } from '../common/decorators/user.decorator';
 import { JwtPayload } from '../common/types/jwt-payload.interface';
+
+import { DocumentService } from './services/document.service'; // добавлено
 import { UserService } from './user.service';
 
 @ApiTags('User')
 @Controller('user')
 export class UserController {
-  constructor(private readonly userService: UserService) {}
+  constructor(
+    private readonly userService: UserService,
+    private readonly documentService: DocumentService, // добавлено
+  ) {}
 
   @Get('profile')
   @Auth('user')
@@ -26,7 +31,7 @@ export class UserController {
     return user;
   }
 
-  @Post('upload-photo')
+  @Post('documents')
   @Auth('user')
   @UseInterceptors(FileInterceptor('file'))
   @ApiConsumes('multipart/form-data')
@@ -63,5 +68,13 @@ export class UserController {
     );
 
     return { message: 'Файл успешно загружен', fileId };
+  }
+
+  @Get('documents')
+  @Auth('user')
+  @ApiOperation({ summary: 'Получить документы пользователя' })
+  async getDocuments(@UserDecorator() user: JwtPayload) {
+    const dbUser = await this.userService.findById(user.sub);
+    return dbUser.documents;
   }
 }
