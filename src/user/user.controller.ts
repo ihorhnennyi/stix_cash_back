@@ -13,7 +13,7 @@ import { Auth } from '../common/decorators/auth.decorator';
 import { User as UserDecorator } from '../common/decorators/user.decorator';
 import { JwtPayload } from '../common/types/jwt-payload.interface';
 
-import { DocumentService } from './services/document.service'; // добавлено
+import { DocumentService } from './services/document.service';
 import { UserService } from './user.service';
 
 @ApiTags('User')
@@ -21,7 +21,7 @@ import { UserService } from './user.service';
 export class UserController {
   constructor(
     private readonly userService: UserService,
-    private readonly documentService: DocumentService, // добавлено
+    private readonly documentService: DocumentService,
   ) {}
 
   @Get('profile')
