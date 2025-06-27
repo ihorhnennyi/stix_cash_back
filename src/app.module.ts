@@ -5,6 +5,7 @@ import { validationSchema } from './config/validation';
 
 import { AdminModule } from './admin/admin.module';
 import { AuthModule } from './auth/auth.module';
+import { TestModule } from './test/test.module';
 import { UserModule } from './user/user.module';
 
 @Module({
@@ -23,6 +24,7 @@ import { UserModule } from './user/user.module';
     AdminModule,
     AuthModule,
     UserModule,
+    TestModule,
   ],
 })
 export class AppModule {}

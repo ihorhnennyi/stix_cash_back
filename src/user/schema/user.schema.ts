@@ -35,6 +35,9 @@ export class User {
   @Prop({ type: [String], default: [] })
   documents: string[];
 
+  @Prop({ default: '' })
+  googleDriveFolderId: string;
+
   @Prop({ default: 0 })
   balance: number;
 
