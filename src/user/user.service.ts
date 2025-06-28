@@ -70,7 +70,7 @@ export class UserService {
   }
 
   async findById(id: string): Promise<UserDocument> {
-    const user = await this.userModel.findById(id);
+    const user = await this.userModel.findById(id).select('-password');
     if (!user) {
       throw new NotFoundException('Пользователь не найден');
     }

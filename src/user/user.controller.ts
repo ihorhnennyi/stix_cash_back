@@ -26,9 +26,9 @@ export class UserController {
 
   @Get('profile')
   @Auth('user')
-  @ApiOperation({ summary: 'Профиль пользователя' })
+  @ApiOperation({ summary: 'Профиль пользователя (полные данные)' })
   getProfile(@UserDecorator() user: JwtPayload) {
-    return user;
+    return this.userService.findById(user.sub);
   }
 
   @Post('documents')
