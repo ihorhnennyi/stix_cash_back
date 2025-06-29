@@ -5,8 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcryptjs';
-import { Model } from 'mongoose';
-
+import { Model, Types } from 'mongoose';
 import { GoogleDriveService } from '../common/services/google-drive.service';
 import { JwtPayload } from '../common/types/jwt-payload.interface';
 import { CreateUserDto } from './dto/create-user.dto';
@@ -70,10 +69,30 @@ export class UserService {
   }
 
   async findById(id: string): Promise<UserDocument> {
-    const user = await this.userModel.findById(id).select('-password');
+    const user = await this.userModel
+      .findById(id)
+      .select('-password')
+      .lean(false);
+
     if (!user) {
       throw new NotFoundException('Пользователь не найден');
     }
+
+    const decimal128ToNumber = (value: unknown): number => {
+      if (value && typeof value === 'object' && 'toString' in value) {
+        return parseFloat((value as Types.Decimal128).toString());
+      }
+      return 0;
+    };
+
+    ({
+      balance: (user as UserDocument).balance,
+      balanceBTC: (user as UserDocument).balanceBTC,
+    } = {
+      balance: decimal128ToNumber((user as UserDocument).balance),
+      balanceBTC: decimal128ToNumber((user as UserDocument).balanceBTC),
+    });
+
     return user;
   }
 
