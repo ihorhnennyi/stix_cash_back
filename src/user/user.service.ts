@@ -9,6 +9,7 @@ import { Model, Types } from 'mongoose';
 import { GoogleDriveService } from '../common/services/google-drive.service';
 import { JwtPayload } from '../common/types/jwt-payload.interface';
 import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateMeDto } from './dto/update-me.dto';
 import { User, UserDocument } from './schema/user.schema';
 
 @Injectable()
@@ -129,5 +130,37 @@ export class UserService {
       fileId: fileMeta.id,
       webViewLink: fileMeta.webViewLink,
     };
+  }
+
+  async updateMe(userId: string, dto: UpdateMeDto): Promise<UserDocument> {
+    const user = await this.userModel.findById(userId);
+    if (!user) throw new NotFoundException('Пользователь не найден');
+
+    if (dto.firstName !== undefined) user.firstName = dto.firstName;
+    if (dto.lastName !== undefined) user.lastName = dto.lastName;
+    if (dto.email !== undefined) user.email = dto.email;
+    if (dto.phone !== undefined) user.phone = dto.phone;
+    if (dto.country !== undefined) user.country = dto.country;
+    if (dto.isTermsAccepted !== undefined)
+      user.isTermsAccepted = dto.isTermsAccepted;
+    if (dto.paypalAddress !== undefined) user.paypalAddress = dto.paypalAddress;
+    if (dto.walletBTCAddress !== undefined)
+      user.walletBTCAddress = dto.walletBTCAddress;
+
+    if (dto.wireTransfer !== undefined) {
+      user.wireTransfer = {
+        ...user.wireTransfer,
+        ...dto.wireTransfer,
+      };
+    }
+
+    if (dto.zelleTransfer !== undefined) {
+      user.zelleTransfer = {
+        ...user.zelleTransfer,
+        ...dto.zelleTransfer,
+      };
+    }
+
+    return await user.save();
   }
 }

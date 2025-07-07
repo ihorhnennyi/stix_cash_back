@@ -10,8 +10,8 @@ import {
 } from '@nestjs/swagger';
 import { AuthService } from '../auth/auth.service';
 import { Auth } from '../common/decorators/auth.decorator';
-import { User } from '../common/decorators/user.decorator';
 import { JwtPayload } from '../common/types/jwt-payload.interface';
+import { CurrentUser } from './../common/decorators/user.decorator';
 import { AdminService } from './admin.service';
 import { LoginAdminDto } from './dto/login-admin.dto';
 
@@ -99,7 +99,7 @@ export class AdminAuthController {
   })
   @ApiUnauthorizedResponse({ description: 'Неавторизован' })
   @ApiForbiddenResponse({ description: 'Недостаточно прав' })
-  profile(@User() user: JwtPayload) {
+  profile(@CurrentUser() user: JwtPayload) {
     return user;
   }
 }
