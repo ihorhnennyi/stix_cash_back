@@ -8,7 +8,7 @@ import { UserDocument, UserDocumentSchema } from './schema/document.schema';
 import { User, UserSchema } from './schema/user.schema';
 
 import { DocumentService } from './services/document.service';
-import { UserService } from './user.service';
+import { UserService } from './services/user.service';
 
 import { UserAuthController } from './user.auth.controller';
 import { UserController } from './user.controller';

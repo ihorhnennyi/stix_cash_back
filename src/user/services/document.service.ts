@@ -10,7 +10,7 @@ export class DocumentService {
     private readonly docModel: Model<UserDocument>,
   ) {}
 
-  async findAllByUser(userId: string) {
+  async findAllByUser(userId: string): Promise<UserDocument[]> {
     return this.docModel.find({ user: userId }).sort({ createdAt: -1 }).lean();
   }
 
@@ -19,7 +19,15 @@ export class DocumentService {
     name: string;
     fileId: string;
     webViewLink: string;
-  }) {
-    return this.docModel.create(doc);
+  }): Promise<UserDocument> {
+    try {
+      return await this.docModel.create(doc);
+    } catch (err) {
+      throw new Error('Не удалось сохранить документ в базу');
+    }
+  }
+
+  async deleteById(id: string): Promise<void> {
+    await this.docModel.findByIdAndDelete(id);
   }
 }

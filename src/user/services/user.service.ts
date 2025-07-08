@@ -1,19 +1,25 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcryptjs';
-import { Model, Types } from 'mongoose';
-import { GoogleDriveService } from '../common/services/google-drive.service';
-import { JwtPayload } from '../common/types/jwt-payload.interface';
-import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateMeDto } from './dto/update-me.dto';
-import { User, UserDocument } from './schema/user.schema';
+import { Model } from 'mongoose';
+
+import { GoogleDriveService } from '../../common/services/google-drive.service';
+import { JwtPayload } from '../../common/types/jwt-payload.interface';
+import { decimal128ToNumber } from '../../utils/mongo.utils';
+
+import { CreateUserDto } from '../dto/create-user.dto';
+import { UpdateMeDto } from '../dto/update-me.dto';
+import { User, UserDocument } from '../schema/user.schema';
 
 @Injectable()
 export class UserService {
+  private readonly logger = new Logger(UserService.name);
+
   constructor(
     @InjectModel(User.name)
     private readonly userModel: Model<UserDocument>,
@@ -49,7 +55,7 @@ export class UserService {
       user.googleDriveFolderId = folderId;
       await user.save();
     } catch (err) {
-      console.error('Ошибка создания папки Google Drive:', err);
+      this.logger.error('Ошибка создания папки Google Drive', err);
     }
 
     return user;
@@ -69,7 +75,7 @@ export class UserService {
     return user;
   }
 
-  async findById(id: string): Promise<UserDocument> {
+  async getMe(id: string): Promise<UserDocument> {
     const user = await this.userModel
       .findById(id)
       .select('-password')
@@ -79,20 +85,12 @@ export class UserService {
       throw new NotFoundException('Пользователь не найден');
     }
 
-    const decimal128ToNumber = (value: unknown): number => {
-      if (value && typeof value === 'object' && 'toString' in value) {
-        return parseFloat((value as Types.Decimal128).toString());
-      }
-      return 0;
-    };
-
-    ({
-      balance: (user as UserDocument).balance,
-      balanceBTC: (user as UserDocument).balanceBTC,
-    } = {
-      balance: decimal128ToNumber((user as UserDocument).balance),
-      balanceBTC: decimal128ToNumber((user as UserDocument).balanceBTC),
-    });
+    (user as UserDocument).balance = decimal128ToNumber(
+      (user as UserDocument).balance,
+    );
+    (user as UserDocument).balanceBTC = decimal128ToNumber(
+      (user as UserDocument).balanceBTC,
+    );
 
     return user;
   }
@@ -105,7 +103,7 @@ export class UserService {
     },
     user: JwtPayload,
   ): Promise<{ fileId: string; webViewLink: string }> {
-    const dbUser = await this.findById(user.sub);
+    const dbUser = await this.getMe(user.sub);
     if (!dbUser.googleDriveFolderId) {
       throw new Error('Google Drive folder not found for user');
     }
@@ -116,10 +114,7 @@ export class UserService {
         : Buffer.from(file.buffer as ArrayBuffer);
 
     const fileMeta = await this.googleDriveService.uploadFileToUserFolder(
-      {
-        ...file,
-        buffer,
-      },
+      { ...file, buffer },
       dbUser.googleDriveFolderId,
     );
 
@@ -136,31 +131,16 @@ export class UserService {
     const user = await this.userModel.findById(userId);
     if (!user) throw new NotFoundException('Пользователь не найден');
 
-    if (dto.firstName !== undefined) user.firstName = dto.firstName;
-    if (dto.lastName !== undefined) user.lastName = dto.lastName;
-    if (dto.email !== undefined) user.email = dto.email;
-    if (dto.phone !== undefined) user.phone = dto.phone;
-    if (dto.country !== undefined) user.country = dto.country;
-    if (dto.isTermsAccepted !== undefined)
-      user.isTermsAccepted = dto.isTermsAccepted;
-    if (dto.paypalAddress !== undefined) user.paypalAddress = dto.paypalAddress;
-    if (dto.walletBTCAddress !== undefined)
-      user.walletBTCAddress = dto.walletBTCAddress;
+    Object.assign(user, {
+      ...dto,
+      wireTransfer: dto.wireTransfer
+        ? { ...user.wireTransfer, ...dto.wireTransfer }
+        : user.wireTransfer,
+      zelleTransfer: dto.zelleTransfer
+        ? { ...user.zelleTransfer, ...dto.zelleTransfer }
+        : user.zelleTransfer,
+    });
 
-    if (dto.wireTransfer !== undefined) {
-      user.wireTransfer = {
-        ...user.wireTransfer,
-        ...dto.wireTransfer,
-      };
-    }
-
-    if (dto.zelleTransfer !== undefined) {
-      user.zelleTransfer = {
-        ...user.zelleTransfer,
-        ...dto.zelleTransfer,
-      };
-    }
-
-    return await user.save();
+    return user.save();
   }
 }

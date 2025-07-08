@@ -18,14 +18,16 @@ import {
   ApiResponse,
   ApiTags,
 } from '@nestjs/swagger';
+import { plainToInstance } from 'class-transformer';
 
 import { JwtAuthGuard } from '../auth/guard/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/user.decorator';
 import { JwtPayload } from '../common/types/jwt-payload.interface';
 
 import { UpdateMeDto } from './dto/update-me.dto';
+import { UserDto } from './dto/user.dto';
 import { DocumentService } from './services/document.service';
-import { UserService } from './user.service';
+import { UserService } from './services/user.service';
 
 @ApiTags('User')
 @ApiBearerAuth()
@@ -39,16 +41,30 @@ export class UserController {
 
   @Get('profile')
   @ApiOperation({ summary: 'Получить данные профиля пользователя' })
-  @ApiResponse({ status: 200, description: 'Профиль пользователя получен' })
-  async getProfile(@CurrentUser() user: JwtPayload) {
-    return this.userService.findById(user.sub);
+  @ApiResponse({
+    status: 200,
+    description: 'Профиль пользователя получен',
+    type: UserDto,
+  })
+  async getProfile(@CurrentUser() user: JwtPayload): Promise<UserDto> {
+    return plainToInstance(UserDto, await this.userService.getMe(user.sub));
   }
 
   @Patch('me')
   @ApiOperation({ summary: 'Обновить данные о себе' })
-  @ApiResponse({ status: 200, description: 'Данные успешно обновлены' })
-  async updateMe(@CurrentUser() user: JwtPayload, @Body() dto: UpdateMeDto) {
-    return this.userService.updateMe(user.sub, dto);
+  @ApiResponse({
+    status: 200,
+    description: 'Данные успешно обновлены',
+    type: UserDto,
+  })
+  async updateMe(
+    @CurrentUser() user: JwtPayload,
+    @Body() dto: UpdateMeDto,
+  ): Promise<UserDto> {
+    return plainToInstance(
+      UserDto,
+      await this.userService.updateMe(user.sub, dto),
+    );
   }
 
   @Post('documents')
@@ -66,7 +82,17 @@ export class UserController {
     },
   })
   @ApiOperation({ summary: 'Загрузить документ в Google Drive' })
-  @ApiResponse({ status: 201, description: 'Файл успешно загружен' })
+  @ApiResponse({
+    status: 201,
+    description: 'Файл успешно загружен',
+    schema: {
+      example: {
+        message: 'Файл успешно загружен',
+        fileId: '1a2b3c4d5e',
+        webViewLink: 'https://drive.google.com/file/d/1a2b3c4d5e/view',
+      },
+    },
+  })
   async uploadPhoto(
     @UploadedFile()
     file: {
@@ -97,9 +123,13 @@ export class UserController {
 
   @Get('documents')
   @ApiOperation({ summary: 'Получить список документов пользователя' })
-  @ApiResponse({ status: 200, description: 'Документы получены' })
-  async getDocuments(@CurrentUser() user: JwtPayload) {
-    const dbUser = await this.userService.findById(user.sub);
+  @ApiResponse({
+    status: 200,
+    description: 'Документы получены',
+    type: [String],
+  })
+  async getDocuments(@CurrentUser() user: JwtPayload): Promise<string[]> {
+    const dbUser = await this.userService.getMe(user.sub);
     return dbUser.documents;
   }
 }
