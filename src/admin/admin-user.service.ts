@@ -83,10 +83,11 @@ export class AdminUserService {
 
     if (dto.password) {
       user.password = await bcrypt.hash(dto.password, 10);
-      delete dto.password;
     }
 
-    Object.assign(user, dto);
+    const { password, ...rest } = dto;
+
+    Object.assign(user, rest);
 
     return (await user.save()).toObject();
   }
