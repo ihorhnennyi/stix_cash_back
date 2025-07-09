@@ -49,6 +49,14 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   showBTCBalance?: boolean;
 
   @ApiPropertyOptional({
+    example: 1200.5,
+    description: 'Баланс пользователя в USD',
+  })
+  @IsOptional()
+  @IsNumber()
+  balance?: number;
+
+  @ApiPropertyOptional({
     example: 0.015,
     description: 'Баланс пользователя в BTC',
   })

@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcryptjs';
-import { FilterQuery, Model } from 'mongoose';
+import { FilterQuery, Model, Types } from 'mongoose';
 import { UpdateUserDto } from '../user/dto/update-user.dto';
 import { User, UserDocument } from '../user/schema/user.schema';
 import { FilterUserDto } from './dto/filter-user.dto';
@@ -82,14 +82,38 @@ export class AdminUserService {
     if (!user) throw new NotFoundException('Пользователь не найден');
 
     if (dto.password) {
-      user.password = await bcrypt.hash(dto.password, 10);
+      const hash = await bcrypt.hash(dto.password, 10);
+      user.password = hash;
     }
 
-    const { password, ...rest } = dto;
+    if (dto.balance !== undefined) {
+      user.balance = Types.Decimal128.fromString(dto.balance.toString());
+    }
+    if (dto.balanceBTC !== undefined) {
+      user.balanceBTC = Types.Decimal128.fromString(dto.balanceBTC.toString());
+    }
 
-    Object.assign(user, rest);
+    if (dto.firstName !== undefined) user.firstName = dto.firstName;
+    if (dto.lastName !== undefined) user.lastName = dto.lastName;
+    if (dto.email !== undefined) user.email = dto.email;
+    if (dto.phone !== undefined) user.phone = dto.phone;
+    if (dto.country !== undefined) user.country = dto.country;
+    if (dto.isVerified !== undefined) user.isVerified = dto.isVerified;
+    if (dto.walletBTCAddress !== undefined)
+      user.walletBTCAddress = dto.walletBTCAddress;
+    if (dto.paypalAddress !== undefined) user.paypalAddress = dto.paypalAddress;
+    if (dto.showBTCBalance !== undefined)
+      user.showBTCBalance = dto.showBTCBalance;
 
-    return (await user.save()).toObject();
+    if (dto.wireTransfer) {
+      user.wireTransfer = { ...user.wireTransfer, ...dto.wireTransfer };
+    }
+
+    if (dto.zelleTransfer) {
+      user.zelleTransfer = { ...user.zelleTransfer, ...dto.zelleTransfer };
+    }
+
+    return user.save();
   }
 
   async deleteUser(id: string): Promise<{ message: string }> {
