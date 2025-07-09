@@ -1,18 +1,22 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { JwtService } from '@nestjs/jwt';
 import { JwtPayload } from '../common/types/jwt-payload.interface';
 
 @Injectable()
 export class AuthService {
-  constructor(private jwtService: JwtService) {}
+  constructor(
+    private readonly jwtService: JwtService,
+    private readonly configService: ConfigService,
+  ) {}
 
   async generateTokens(payload: JwtPayload) {
     const accessToken = await this.jwtService.signAsync(payload, {
-      expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
+      expiresIn: this.configService.get<string>('JWT_ACCESS_EXPIRES_IN'),
     });
 
     const refreshToken = await this.jwtService.signAsync(payload, {
-      expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
+      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN'),
     });
 
     return {
@@ -32,20 +36,9 @@ export class AuthService {
         roles: payload.roles,
       };
 
-      const accessToken = await this.jwtService.signAsync(newPayload, {
-        expiresIn: process.env.JWT_ACCESS_EXPIRES_IN,
-      });
-
-      const newRefreshToken = await this.jwtService.signAsync(newPayload, {
-        expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
-      });
-
-      return {
-        accessToken,
-        refreshToken: newRefreshToken,
-      };
-    } catch {
-      throw new Error('Недействительный refresh токен');
+      return this.generateTokens(newPayload);
+    } catch (err) {
+      throw new UnauthorizedException('Недействительный refresh токен');
     }
   }
 }
