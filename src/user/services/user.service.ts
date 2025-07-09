@@ -85,14 +85,12 @@ export class UserService {
       throw new NotFoundException('Пользователь не найден');
     }
 
-    (user as UserDocument).balance = decimal128ToNumber(
-      (user as UserDocument).balance,
-    );
-    (user as UserDocument).balanceBTC = decimal128ToNumber(
-      (user as UserDocument).balanceBTC,
-    );
+    const doc = user.toObject();
 
-    return user;
+    doc.balance = decimal128ToNumber(user.balance);
+    doc.balanceBTC = decimal128ToNumber(user.balanceBTC);
+
+    return doc as UserDocument;
   }
 
   async uploadFileToDrive(
