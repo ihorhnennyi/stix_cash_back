@@ -1,5 +1,5 @@
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsBoolean, IsOptional } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
 import { CreateUserDto } from './create-user.dto';
 import { WireTransferDto, ZelleTransferDto } from './transfer-info.dto';
 
@@ -18,11 +18,17 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsOptional()
   paypalAddress?: string;
 
-  @ApiPropertyOptional({ description: 'Инфо по банковскому переводу (Wire)' })
+  @ApiPropertyOptional({
+    description: 'Инфо по банковскому переводу (Wire)',
+    type: () => WireTransferDto,
+  })
   @IsOptional()
   wireTransfer?: WireTransferDto;
 
-  @ApiPropertyOptional({ description: 'Инфо для перевода Zelle' })
+  @ApiPropertyOptional({
+    description: 'Инфо для перевода Zelle',
+    type: () => ZelleTransferDto,
+  })
   @IsOptional()
   zelleTransfer?: ZelleTransferDto;
 
@@ -41,4 +47,20 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsOptional()
   @IsBoolean()
   showBTCBalance?: boolean;
+
+  @ApiPropertyOptional({
+    example: 0.015,
+    description: 'Баланс пользователя в BTC',
+  })
+  @IsOptional()
+  @IsNumber()
+  balanceBTC?: number;
+
+  @ApiPropertyOptional({
+    example: 'newAdminPassword123',
+    description: 'Новый пароль пользователя',
+  })
+  @IsOptional()
+  @IsString()
+  password?: string;
 }

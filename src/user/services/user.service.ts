@@ -131,6 +131,16 @@ export class UserService {
     const user = await this.userModel.findById(userId);
     if (!user) throw new NotFoundException('Пользователь не найден');
 
+    delete (dto as any).isVerified;
+    delete (dto as any).showBTCBalance;
+    delete (dto as any).balanceBTC;
+    delete (dto as any).balance;
+
+    if ((dto as any).password) {
+      user.password = await bcrypt.hash((dto as any).password, 10);
+      delete (dto as any).password;
+    }
+
     Object.assign(user, {
       ...dto,
       wireTransfer: dto.wireTransfer

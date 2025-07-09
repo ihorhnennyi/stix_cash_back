@@ -30,4 +30,12 @@ export class UpdateMeDto {
     email?: string;
     phone?: string;
   };
+
+  @IsOptional()
+  @IsString()
+  @ApiPropertyOptional({
+    example: 'newStrongPass123',
+    description: 'Новый пароль',
+  })
+  password?: string;
 }
