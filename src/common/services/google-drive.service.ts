@@ -40,7 +40,6 @@ export class GoogleDriveService implements OnModuleInit {
     const folderIdFromEnv = this.configService.get<string>(
       'GOOGLE_DRIVE_PARENT_FOLDER_ID',
     );
-
     if (!folderIdFromEnv) {
       throw new Error('GOOGLE_DRIVE_PARENT_FOLDER_ID is not set');
     }
@@ -93,11 +92,7 @@ export class GoogleDriveService implements OnModuleInit {
   }
 
   async uploadFileToUserFolder(
-    file: {
-      originalname: string;
-      mimetype: string;
-      buffer: Buffer;
-    },
+    file: { originalname: string; mimetype: string; buffer: Buffer },
     folderId: string,
   ): Promise<{ id: string; webViewLink: string }> {
     const bufferStream = new Readable();

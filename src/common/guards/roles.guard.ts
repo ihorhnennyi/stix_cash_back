@@ -3,15 +3,19 @@ import {
   ExecutionContext,
   ForbiddenException,
   Injectable,
+  Logger,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Request } from 'express';
+
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import { JwtPayload } from '../types/jwt-payload.interface';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  private readonly logger = new Logger(RolesGuard.name);
+
+  constructor(private readonly reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
     const requiredRoles = this.reflector.getAllAndOverride<string[]>(
@@ -19,23 +23,24 @@ export class RolesGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
 
-    if (!requiredRoles) return true;
+    if (!requiredRoles || requiredRoles.length === 0) {
+      return true;
+    }
 
     const request = context
       .switchToHttp()
       .getRequest<Request & { user: JwtPayload }>();
-
     const user = request.user;
-    if (!user || !user.roles) {
-      console.log('RolesGuard: user or user.roles is missing');
+
+    if (!user?.roles?.length) {
+      this.logger.warn('RolesGuard: отсутствует пользователь или его роли');
       throw new ForbiddenException('Нет доступа');
     }
 
-    if (!user || !user.roles) throw new ForbiddenException('Нет доступа');
-
     const hasRole = requiredRoles.some((role) => user.roles.includes(role));
-
-    if (!hasRole) throw new ForbiddenException('Недостаточно прав');
+    if (!hasRole) {
+      throw new ForbiddenException('Недостаточно прав');
+    }
 
     return true;
   }
