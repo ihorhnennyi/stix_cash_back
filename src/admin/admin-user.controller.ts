@@ -10,9 +10,9 @@ import {
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Auth } from '../common/decorators/auth.decorator';
 import { Role } from '../types/role.enum';
+import { UpdateUserDto } from '../user/dto/update-user.dto';
 import { AdminUserService } from './admin-user.service';
 import { FilterUserDto } from './dto/filter-user.dto';
-import { UpdateUserDto } from './dto/update-user.dto';
 
 @ApiTags('Admin - Users')
 @Auth(Role.Admin)
