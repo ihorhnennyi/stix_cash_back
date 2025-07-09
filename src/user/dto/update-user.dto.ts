@@ -1,6 +1,5 @@
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
-import { IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsOptional } from 'class-validator';
 import { CreateUserDto } from './create-user.dto';
 import { WireTransferDto, ZelleTransferDto } from './transfer-info.dto';
 
@@ -10,7 +9,6 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
     description: 'BTC-кошелёк',
   })
   @IsOptional()
-  @IsString()
   walletBTCAddress?: string;
 
   @ApiPropertyOptional({
@@ -18,22 +16,29 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
     description: 'PayPal адрес',
   })
   @IsOptional()
-  @IsString()
   paypalAddress?: string;
 
-  @ApiPropertyOptional({
-    description: 'Информация для банковского перевода (Wire)',
-    type: () => WireTransferDto,
-  })
+  @ApiPropertyOptional({ description: 'Инфо по банковскому переводу (Wire)' })
   @IsOptional()
-  @Type(() => WireTransferDto)
   wireTransfer?: WireTransferDto;
 
+  @ApiPropertyOptional({ description: 'Инфо для перевода Zelle' })
+  @IsOptional()
+  zelleTransfer?: ZelleTransferDto;
+
   @ApiPropertyOptional({
-    description: 'Информация для Zelle перевода',
-    type: () => ZelleTransferDto,
+    example: true,
+    description: 'Пользователь верифицирован?',
   })
   @IsOptional()
-  @Type(() => ZelleTransferDto)
-  zelleTransfer?: ZelleTransferDto;
+  @IsBoolean()
+  isVerified?: boolean;
+
+  @ApiPropertyOptional({
+    example: false,
+    description: 'Показывать баланс в BTC',
+  })
+  @IsOptional()
+  @IsBoolean()
+  showBTCBalance?: boolean;
 }
