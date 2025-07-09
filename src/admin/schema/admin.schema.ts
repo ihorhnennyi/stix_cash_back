@@ -1,11 +1,13 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
-@Schema()
+export type AdminDocument = Admin & Document;
+
+@Schema({ timestamps: true })
 export class Admin {
   _id: Types.ObjectId;
 
-  @Prop({ required: true })
+  @Prop({ required: true, unique: true, lowercase: true, trim: true })
   email: string;
 
   @Prop({ required: true })
@@ -15,5 +17,4 @@ export class Admin {
   roles: string[];
 }
 
-export type AdminDocument = Admin & Document;
 export const AdminSchema = SchemaFactory.createForClass(Admin);

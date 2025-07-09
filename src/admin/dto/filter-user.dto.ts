@@ -1,11 +1,17 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import { IsBooleanString, IsOptional, IsString } from 'class-validator';
+import {
+  IsBooleanString,
+  IsIn,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class FilterUserDto {
   @ApiPropertyOptional({
     description: 'Поиск по email (регистронезависимый)',
-    example: 'gmail.com',
+    example: 'example@gmail.com',
   })
   @IsOptional()
   @IsString()
@@ -31,66 +37,71 @@ export class FilterUserDto {
   isVerified?: boolean;
 
   @ApiPropertyOptional({
-    example: 100,
-    description: 'Минимальный баланс пользователя',
+    description: 'Минимальный баланс',
+    example: 0,
   })
   @IsOptional()
-  @Transform(({ value }: { value: string }) => parseFloat(value))
+  @Transform(({ value }) => parseFloat(value))
+  @IsNumber()
   balanceFrom?: number;
 
   @ApiPropertyOptional({
+    description: 'Максимальный баланс',
     example: 1000,
-    description: 'Максимальный баланс пользователя',
   })
   @IsOptional()
-  @Transform(({ value }: { value: string }) => parseFloat(value))
+  @Transform(({ value }) => parseFloat(value))
+  @IsNumber()
   balanceTo?: number;
 
   @ApiPropertyOptional({
+    description: 'Дата создания: от',
     example: '2024-01-01',
-    description: 'Дата регистрации: с',
   })
   @IsOptional()
-  @Transform(({ value }: { value: string }) => new Date(value))
+  @Transform(({ value }) => new Date(value))
   createdFrom?: Date;
 
   @ApiPropertyOptional({
+    description: 'Дата создания: до',
     example: '2024-12-31',
-    description: 'Дата регистрации: по',
   })
   @IsOptional()
-  @Transform(({ value }: { value: string }) => new Date(value))
+  @Transform(({ value }) => new Date(value))
   createdTo?: Date;
 
   @ApiPropertyOptional({
-    example: '1',
-    description: 'Страница (пагинация)',
+    description: 'Номер страницы',
+    example: 1,
   })
   @IsOptional()
-  @Transform(({ value }: { value: string }) => parseInt(value, 10))
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsNumber()
   page?: number;
 
   @ApiPropertyOptional({
-    example: '20',
-    description: 'Лимит на страницу (по умолчанию 20)',
+    description: 'Лимит записей на страницу',
+    example: 20,
   })
   @IsOptional()
-  @Transform(({ value }: { value: string }) => parseInt(value, 10))
+  @Transform(({ value }) => parseInt(value, 10))
+  @IsNumber()
   limit?: number;
 
   @ApiPropertyOptional({
+    description: 'Поле сортировки',
     example: 'createdAt',
-    description: 'Поле для сортировки',
   })
   @IsOptional()
   @IsString()
   sortBy?: string;
 
   @ApiPropertyOptional({
+    description: 'Направление сортировки',
     example: 'desc',
-    description: 'Направление сортировки (asc | desc)',
+    enum: ['asc', 'desc'],
   })
   @IsOptional()
-  @IsString()
+  @IsIn(['asc', 'desc'])
   sortOrder?: 'asc' | 'desc';
 }

@@ -12,7 +12,7 @@ export class AdminUserService {
     private readonly userModel: Model<UserDocument>,
   ) {}
 
-  async getAllUsers(filter?: FilterUserDto): Promise<UserDocument[]> {
+  async getAllUsers(filter?: FilterUserDto): Promise<User[]> {
     const query: FilterQuery<UserDocument> = {};
 
     if (filter?.email) {
@@ -31,28 +31,24 @@ export class AdminUserService {
       typeof filter?.balanceFrom === 'number' ||
       typeof filter?.balanceTo === 'number'
     ) {
-      const balanceQuery: Partial<Record<'$gte' | '$lte', number>> = {};
-
+      const balanceQuery: Record<string, number> = {};
       if (typeof filter.balanceFrom === 'number') {
         balanceQuery.$gte = filter.balanceFrom;
       }
       if (typeof filter.balanceTo === 'number') {
         balanceQuery.$lte = filter.balanceTo;
       }
-
       query.balance = balanceQuery;
     }
 
     if (filter?.createdFrom || filter?.createdTo) {
-      const createdAtQuery: Partial<Record<'$gte' | '$lte', Date>> = {};
-
+      const createdAtQuery: Record<string, Date> = {};
       if (filter.createdFrom) {
         createdAtQuery.$gte = new Date(filter.createdFrom);
       }
       if (filter.createdTo) {
         createdAtQuery.$lte = new Date(filter.createdTo);
       }
-
       query.createdAt = createdAtQuery;
     }
 
@@ -74,17 +70,16 @@ export class AdminUserService {
       .lean();
   }
 
-  async getUserById(id: string): Promise<UserDocument> {
+  async getUserById(id: string): Promise<User> {
     const user = await this.userModel.findById(id).lean();
     if (!user) throw new NotFoundException('Пользователь не найден');
     return user;
   }
 
-  async updateUser(id: string, dto: UpdateUserDto): Promise<UserDocument> {
-    const user = await this.userModel.findByIdAndUpdate(id, dto, {
-      new: true,
-      runValidators: true,
-    });
+  async updateUser(id: string, dto: UpdateUserDto): Promise<User> {
+    const user = await this.userModel
+      .findByIdAndUpdate(id, dto, { new: true, runValidators: true })
+      .lean();
     if (!user) throw new NotFoundException('Пользователь не найден');
     return user;
   }

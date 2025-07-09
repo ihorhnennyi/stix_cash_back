@@ -7,7 +7,8 @@ import { Admin, AdminDocument } from './schema/admin.schema';
 @Injectable()
 export class AdminService {
   constructor(
-    @InjectModel(Admin.name) private adminModel: Model<AdminDocument>,
+    @InjectModel(Admin.name)
+    private readonly adminModel: Model<AdminDocument>,
   ) {}
 
   async validateAdmin(email: string, password: string): Promise<AdminDocument> {
@@ -18,7 +19,6 @@ export class AdminService {
     }
 
     const isPasswordValid = await bcrypt.compare(password, admin.password);
-
     if (!isPasswordValid) {
       throw new UnauthorizedException('Неверный email или пароль');
     }
@@ -27,13 +27,15 @@ export class AdminService {
   }
 
   async createAdmin(email: string, password: string): Promise<AdminDocument> {
-    const hash = await bcrypt.hash(password, 10);
-    const newAdmin = new this.adminModel({
+    const hashedPassword = await bcrypt.hash(password, 10);
+
+    const admin = new this.adminModel({
       email,
-      password: hash,
+      password: hashedPassword,
       roles: ['admin'],
     });
-    return newAdmin.save();
+
+    return admin.save();
   }
 
   async findByEmail(email: string): Promise<AdminDocument | null> {

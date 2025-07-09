@@ -11,6 +11,7 @@ import {
 import { AuthService } from '../auth/auth.service';
 import { Auth } from '../common/decorators/auth.decorator';
 import { JwtPayload } from '../common/types/jwt-payload.interface';
+import { Role } from '../types/role.enum';
 import { CurrentUser } from './../common/decorators/user.decorator';
 import { AdminService } from './admin.service';
 import { LoginAdminDto } from './dto/login-admin.dto';
@@ -19,19 +20,18 @@ import { LoginAdminDto } from './dto/login-admin.dto';
 @Controller('admin/auth')
 export class AdminAuthController {
   constructor(
-    private adminService: AdminService,
-    private authService: AuthService,
+    private readonly adminService: AdminService,
+    private readonly authService: AuthService,
   ) {}
 
   @Post('login')
   @ApiOperation({
     summary: 'Авторизация администратора',
-    description:
-      'Позволяет выполнить вход администратора в систему Stix Cash и получить JWT access и refresh токены.',
+    description: 'Вход администратора и получение access/refresh токенов',
   })
   @ApiBody({ type: LoginAdminDto })
   @ApiOkResponse({
-    description: 'Успешный логин',
+    description: 'Успешный вход',
     schema: {
       example: {
         accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
@@ -56,19 +56,16 @@ export class AdminAuthController {
 
   @Post('refresh')
   @ApiOperation({
-    summary: 'Обновление JWT токенов',
-    description:
-      'Позволяет обновить JWT access и refresh токены администратора.',
+    summary: 'Обновление токенов',
+    description: 'Получение новых access и refresh токенов',
   })
   @ApiBody({
     schema: {
-      example: {
-        refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
-      },
+      example: { refreshToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...' },
     },
   })
   @ApiOkResponse({
-    description: 'Успешное обновление токенов',
+    description: 'Токены успешно обновлены',
     schema: {
       example: {
         accessToken: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
@@ -80,15 +77,15 @@ export class AdminAuthController {
     return this.authService.refreshTokens(body.refreshToken);
   }
 
+  @Auth(Role.Admin)
   @Get('profile')
-  @Auth('admin')
   @ApiBearerAuth()
   @ApiOperation({
-    summary: 'Профиль администратора',
-    description: 'Получение данных текущего администратора по access токену.',
+    summary: 'Получение профиля администратора',
+    description: 'Информация о текущем администраторе из токена',
   })
   @ApiOkResponse({
-    description: 'Информация о текущем администраторе',
+    description: 'Информация успешно получена',
     schema: {
       example: {
         sub: '665ff3d63bd098dd81fd9e65',
@@ -97,7 +94,7 @@ export class AdminAuthController {
       },
     },
   })
-  @ApiUnauthorizedResponse({ description: 'Неавторизован' })
+  @ApiUnauthorizedResponse({ description: 'Не авторизован' })
   @ApiForbiddenResponse({ description: 'Недостаточно прав' })
   profile(@CurrentUser() user: JwtPayload) {
     return user;

@@ -9,12 +9,13 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import { Auth } from '../common/decorators/auth.decorator';
+import { Role } from '../types/role.enum';
 import { AdminUserService } from './admin-user.service';
 import { FilterUserDto } from './dto/filter-user.dto';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @ApiTags('Admin - Users')
-@Auth('admin')
+@Auth(Role.Admin)
 @ApiBearerAuth()
 @Controller('admin/users')
 export class AdminUserController {
