@@ -1,0 +1,28 @@
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import { Document, Schema as MongooseSchema, Types } from 'mongoose';
+import { User } from '../../user/schema/user.schema';
+
+export type TransactionDocument = Transaction & Document;
+
+@Schema({ timestamps: true })
+export class Transaction {
+  @Prop({ type: MongooseSchema.Types.ObjectId, ref: User.name, required: true })
+  user: Types.ObjectId;
+
+  @Prop({ enum: ['deposit', 'withdrawal'], required: true })
+  type: 'deposit' | 'withdrawal';
+
+  @Prop({ type: MongooseSchema.Types.Decimal128, required: true })
+  amount: Types.Decimal128;
+
+  @Prop({ enum: ['USD', 'BTC'], required: true })
+  currency: 'USD' | 'BTC';
+
+  @Prop({ enum: ['pending', 'completed', 'failed'], default: 'pending' })
+  status: 'pending' | 'completed' | 'failed';
+
+  @Prop({ default: false })
+  createdByAdmin: boolean;
+}
+
+export const TransactionSchema = SchemaFactory.createForClass(Transaction);
