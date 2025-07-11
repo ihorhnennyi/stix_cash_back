@@ -23,6 +23,19 @@ export class Transaction {
 
   @Prop({ default: false })
   createdByAdmin: boolean;
+
+  @Prop({
+    type: String,
+    enum: ['From Wallet', 'To Wallet', 'Wire', 'PayPal', 'BTC'],
+    required: false,
+  })
+  method?: string;
+
+  @Prop({ type: String, required: false })
+  note?: string;
+
+  @Prop({ type: Date, required: false })
+  date?: Date;
 }
 
 export const TransactionSchema = SchemaFactory.createForClass(Transaction);

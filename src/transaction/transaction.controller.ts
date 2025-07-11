@@ -5,9 +5,15 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
-import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import {
+  ApiBearerAuth,
+  ApiOperation,
+  ApiResponse,
+  ApiTags,
+} from '@nestjs/swagger';
 
 import { JwtAuthGuard } from '../auth/guard/jwt-auth.guard';
 import { Roles } from '../common/decorators/roles.decorator';
@@ -29,6 +35,8 @@ export class TransactionController {
   constructor(private readonly transactionService: TransactionService) {}
 
   @ApiOperation({ summary: 'Запросить ввод/вывод денег (пользователь)' })
+  @ApiResponse({ status: 201, description: 'Транзакция создана' })
+  @ApiResponse({ status: 401, description: 'Неавторизован' })
   @Post()
   async createUserTransaction(
     @Body() dto: CreateTransactionDto,
@@ -38,6 +46,8 @@ export class TransactionController {
   }
 
   @ApiOperation({ summary: 'Создать транзакцию для пользователя (админ)' })
+  @ApiResponse({ status: 201, description: 'Транзакция создана админом' })
+  @ApiResponse({ status: 403, description: 'Нет прав доступа' })
   @Roles(Role.Admin)
   @UseGuards(RolesGuard)
   @Post('admin/:userId')
@@ -49,6 +59,8 @@ export class TransactionController {
   }
 
   @ApiOperation({ summary: 'Обновить статус транзакции (админ)' })
+  @ApiResponse({ status: 200, description: 'Статус обновлён' })
+  @ApiResponse({ status: 404, description: 'Транзакция не найдена' })
   @Roles(Role.Admin)
   @UseGuards(RolesGuard)
   @Patch(':id/status')
@@ -60,16 +72,32 @@ export class TransactionController {
   }
 
   @ApiOperation({ summary: 'Получить все транзакции (админ)' })
+  @ApiResponse({ status: 200, description: 'Список всех транзакций' })
   @Roles(Role.Admin)
   @UseGuards(RolesGuard)
   @Get()
-  async getAllTransactions() {
-    return this.transactionService.findAll();
+  async getAllTransactions(
+    @Query('userId') userId?: string,
+    @Query('from') from?: string,
+    @Query('to') to?: string,
+  ) {
+    return this.transactionService.findAllWithFilters(userId, from, to);
   }
 
-  @ApiOperation({ summary: 'Получить мои транзакции (пользователь)' })
+  @ApiOperation({ summary: 'Получить свои транзакции (пользователь)' })
+  @ApiResponse({ status: 200, description: 'Список моих транзакций' })
   @Get('my')
   async getMyTransactions(@CurrentUser() user: JwtPayload) {
     return this.transactionService.findByUser(user.sub);
+  }
+
+  @ApiOperation({ summary: 'Получить транзакцию по ID (админ)' })
+  @ApiResponse({ status: 200, description: 'Одна транзакция' })
+  @ApiResponse({ status: 404, description: 'Транзакция не найдена' })
+  @Roles(Role.Admin)
+  @UseGuards(RolesGuard)
+  @Get(':id')
+  async getTransactionById(@Param('id') id: string) {
+    return this.transactionService.findById(id);
   }
 }
