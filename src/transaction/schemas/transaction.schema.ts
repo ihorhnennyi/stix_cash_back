@@ -18,15 +18,23 @@ export class Transaction {
   @Prop({ enum: ['USD', 'BTC'], required: true })
   currency: 'USD' | 'BTC';
 
-  @Prop({ enum: ['pending', 'completed', 'failed'], default: 'pending' })
-  status: 'pending' | 'completed' | 'failed';
+  @Prop({
+    enum: ['pending', 'completed', 'failed', 'canceled'],
+    default: 'pending',
+  })
+  status: 'pending' | 'completed' | 'failed' | 'canceled';
 
   @Prop({ default: false })
   createdByAdmin: boolean;
 
   @Prop({
     type: String,
-    enum: ['From Wallet', 'To Wallet', 'Wire', 'PayPal', 'BTC'],
+    enum: [
+      'walletBTCAddress',
+      'wireTransfer',
+      'zelleTransfer',
+      'paypalAddress',
+    ],
     required: false,
   })
   method?: string;
@@ -36,6 +44,9 @@ export class Transaction {
 
   @Prop({ type: Date, required: false })
   date?: Date;
+
+  @Prop({ type: String, required: false })
+  transactionId?: string;
 }
 
 export const TransactionSchema = SchemaFactory.createForClass(Transaction);

@@ -1,5 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { IsEnum, IsNumber, IsOptional, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsNumber,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 
 export class CreateTransactionDto {
   @ApiProperty({ example: 'deposit', enum: ['deposit', 'withdrawal'] })
@@ -15,13 +21,27 @@ export class CreateTransactionDto {
   currency: 'USD' | 'BTC';
 
   @ApiProperty({
-    example: 'From Wallet',
-    enum: ['From Wallet', 'To Wallet', 'Wire', 'PayPal', 'BTC'],
+    example: 'walletBTCAddress',
+    enum: [
+      'walletBTCAddress',
+      'wireTransfer',
+      'zelleTransfer',
+      'paypalAddress',
+    ],
     required: false,
   })
   @IsOptional()
-  @IsString()
-  method?: string;
+  @IsEnum([
+    'walletBTCAddress',
+    'wireTransfer',
+    'zelleTransfer',
+    'paypalAddress',
+  ])
+  method?:
+    | 'walletBTCAddress'
+    | 'wireTransfer'
+    | 'zelleTransfer'
+    | 'paypalAddress';
 
   @ApiProperty({ example: 'Комментарий к транзакции', required: false })
   @IsOptional()
@@ -30,5 +50,20 @@ export class CreateTransactionDto {
 
   @ApiProperty({ example: '2024-07-11T10:00:00.000Z', required: false })
   @IsOptional()
+  @IsDateString()
   date?: Date;
+
+  @ApiProperty({
+    example: 'completed',
+    enum: ['pending', 'completed', 'failed', 'canceled'],
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(['pending', 'completed', 'failed', 'canceled'])
+  status?: 'pending' | 'completed' | 'failed' | 'canceled';
+
+  @ApiProperty({ example: 'abc123xyz789', required: false })
+  @IsOptional()
+  @IsString()
+  transactionId?: string;
 }

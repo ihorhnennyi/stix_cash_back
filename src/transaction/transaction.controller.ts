@@ -24,6 +24,7 @@ import { JwtPayload } from '../common/types/jwt-payload.interface';
 import { Role } from '../types/role.enum';
 
 import { CreateTransactionDto } from './dto/create-transaction.dto';
+import { FilterTransactionsDto } from './dto/filter-transactions.dto';
 import { UpdateTransactionStatusDto } from './dto/update-transaction-status.dto';
 import { TransactionService } from './transaction.service';
 
@@ -34,9 +35,8 @@ import { TransactionService } from './transaction.service';
 export class TransactionController {
   constructor(private readonly transactionService: TransactionService) {}
 
-  @ApiOperation({ summary: 'Запросить ввод/вывод денег (пользователь)' })
+  @ApiOperation({ summary: 'Создать транзакцию (пользователь)' })
   @ApiResponse({ status: 201, description: 'Транзакция создана' })
-  @ApiResponse({ status: 401, description: 'Неавторизован' })
   @Post()
   async createUserTransaction(
     @Body() dto: CreateTransactionDto,
@@ -45,9 +45,8 @@ export class TransactionController {
     return this.transactionService.create(user.sub, dto, false);
   }
 
-  @ApiOperation({ summary: 'Создать транзакцию для пользователя (админ)' })
+  @ApiOperation({ summary: 'Создать транзакцию (админ)' })
   @ApiResponse({ status: 201, description: 'Транзакция создана админом' })
-  @ApiResponse({ status: 403, description: 'Нет прав доступа' })
   @Roles(Role.Admin)
   @UseGuards(RolesGuard)
   @Post('admin/:userId')
@@ -71,17 +70,13 @@ export class TransactionController {
     return this.transactionService.updateStatus(id, dto);
   }
 
-  @ApiOperation({ summary: 'Получить все транзакции (админ)' })
-  @ApiResponse({ status: 200, description: 'Список всех транзакций' })
+  @ApiOperation({ summary: 'Получить все транзакции с фильтрами (админ)' })
+  @ApiResponse({ status: 200, description: 'Список транзакций' })
   @Roles(Role.Admin)
   @UseGuards(RolesGuard)
   @Get()
-  async getAllTransactions(
-    @Query('userId') userId?: string,
-    @Query('from') from?: string,
-    @Query('to') to?: string,
-  ) {
-    return this.transactionService.findAllWithFilters(userId, from, to);
+  async getAllTransactions(@Query() filters: FilterTransactionsDto) {
+    return this.transactionService.findAllWithFilters(filters);
   }
 
   @ApiOperation({ summary: 'Получить свои транзакции (пользователь)' })
