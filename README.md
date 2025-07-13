@@ -1,44 +1,44 @@
 <h1 align="center">💸 Stix Cash Backend</h1>
 
 <p align="center">
-  <b>Backend платёжной платформы с управлением пользователями и транзакциями</b><br/>
-  <sub>Создано на NestJS + MongoDB | JWT авторизация | Swagger API | Google Drive интеграция</sub>
+  <b>Backend payment platform with user and transaction management</b><br/>
+  <sub>Built with NestJS + MongoDB | JWT Auth | Swagger API | Google Drive Integration</sub>
 </p>
 
 ---
 
-## 🚀 Возможности
+## 🚀 Features
 
-- 🔐 Аутентификация и авторизация (JWT, refresh токены)
-- 🧾 Управление пользователями и их верификацией
-- 💳 Система транзакций (ввод/вывод, балансы USD и BTC)
-- 🧩 Интеграция с Google Drive (загрузка документов)
-- ⚙️ Swagger-документация и глобальные Guards, Interceptors
-
----
-
-## 🧠 Технологии
-
-| Технология | Описание                                      |
-| ---------- | --------------------------------------------- |
-| NestJS     | Фреймворк для Node.js (TypeScript)            |
-| MongoDB    | NoSQL база данных                             |
-| Mongoose   | ODM для MongoDB                               |
-| Swagger    | Документация REST API                         |
-| Google API | Работа с Google Drive через сервисный аккаунт |
-| Docker     | (по желанию) контейнеризация проекта          |
+- 🔐 Authentication and Authorization (JWT, refresh tokens)
+- 🧾 User management and verification
+- 💳 Transaction system (deposit/withdrawal, USD and BTC balances)
+- 🧩 Google Drive integration (document uploads)
+- ⚙️ Swagger documentation, global Guards and Interceptors
 
 ---
 
-## 🛠️ Установка
+## 🧠 Technologies
+
+| Technology | Description                                     |
+| ---------- | ----------------------------------------------- |
+| NestJS     | Node.js framework with TypeScript               |
+| MongoDB    | NoSQL database                                  |
+| Mongoose   | ODM for MongoDB                                 |
+| Swagger    | API documentation generator                     |
+| Google API | Integration with Google Drive (service account) |
+| Docker     | (optional) Project containerization             |
+
+---
+
+## 🛠️ Installation
 
 ```bash
 git clone https://github.com/ihorhnennyi/stix_cash_back.git
 cd stix_cash_back
 
-# Установка зависимостей
+# Install dependencies
 npm install
 
-# Запуск проекта
+# Run in development mode
 npm run start:dev
 ```
