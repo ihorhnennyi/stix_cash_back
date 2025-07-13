@@ -16,6 +16,10 @@ export class CreateTransactionDto {
   @IsNumber()
   amount: number;
 
+  @ApiProperty({ example: 1200.75, description: 'Баланс после транзакции' })
+  @IsNumber()
+  balance: number;
+
   @ApiProperty({ example: 'USD', enum: ['USD', 'BTC'] })
   @IsEnum(['USD', 'BTC'])
   currency: 'USD' | 'BTC';

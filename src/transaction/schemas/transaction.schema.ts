@@ -15,6 +15,9 @@ export class Transaction {
   @Prop({ type: MongooseSchema.Types.Decimal128, required: true })
   amount: Types.Decimal128;
 
+  @Prop({ type: MongooseSchema.Types.Decimal128, required: false })
+  balance?: Types.Decimal128;
+
   @Prop({ enum: ['USD', 'BTC'], required: true })
   currency: 'USD' | 'BTC';
 
@@ -37,7 +40,11 @@ export class Transaction {
     ],
     required: false,
   })
-  method?: string;
+  method?:
+    | 'walletBTCAddress'
+    | 'wireTransfer'
+    | 'zelleTransfer'
+    | 'paypalAddress';
 
   @Prop({ type: String, required: false })
   note?: string;
@@ -50,3 +57,12 @@ export class Transaction {
 }
 
 export const TransactionSchema = SchemaFactory.createForClass(Transaction);
+
+TransactionSchema.set('toJSON', {
+  transform: (_doc, ret) => {
+    if (ret.amount && ret.amount._bsontype === 'Decimal128') {
+      ret.amount = parseFloat(ret.amount.toString());
+    }
+    return ret;
+  },
+});

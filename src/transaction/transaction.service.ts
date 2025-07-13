@@ -23,11 +23,13 @@ export class TransactionService {
       user: new Types.ObjectId(userId),
       type: dto.type,
       amount: Types.Decimal128.fromString(dto.amount.toString()),
+      balance: Types.Decimal128.fromString(dto.balance.toString()),
       currency: dto.currency,
       method: dto.method,
       note: dto.note,
       date: dto.date,
       transactionId: dto.transactionId,
+      status: dto.status,
       createdByAdmin,
     });
 

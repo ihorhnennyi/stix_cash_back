@@ -10,7 +10,7 @@ import { Model } from 'mongoose';
 
 import { GoogleDriveService } from '../../common/services/google-drive.service';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
-import { decimal128ToNumber } from '../../utils/mongo.utils';
+import { decimal128ToNumber } from '../../utils/decimal128ToNumber';
 
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateMeDto } from '../dto/update-me.dto';

@@ -1,5 +1,6 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, SchemaTypes, Types } from 'mongoose';
+import { decimal128ToNumber } from 'src/utils/decimal128ToNumber';
 
 export type UserDocument = User & Document & { _id: Types.ObjectId };
 
@@ -113,3 +114,17 @@ export class User {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+UserSchema.set('toJSON', {
+  transform: (_doc, ret) => {
+    if (ret.balance && ret.balance._bsontype === 'Decimal128') {
+      ret.balance = decimal128ToNumber(ret.balance);
+    }
+
+    if (ret.balanceBTC && ret.balanceBTC._bsontype === 'Decimal128') {
+      ret.balanceBTC = decimal128ToNumber(ret.balanceBTC);
+    }
+
+    return ret;
+  },
+});
