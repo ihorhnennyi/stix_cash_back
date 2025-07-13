@@ -13,7 +13,7 @@ export class Transaction {
   type: 'deposit' | 'withdrawal';
 
   @Prop({ type: MongooseSchema.Types.Decimal128, required: true })
-  amount: Types.Decimal128;
+  amount?: Types.Decimal128;
 
   @Prop({ type: MongooseSchema.Types.Decimal128, required: false })
   balance?: Types.Decimal128;
@@ -57,12 +57,3 @@ export class Transaction {
 }
 
 export const TransactionSchema = SchemaFactory.createForClass(Transaction);
-
-TransactionSchema.set('toJSON', {
-  transform: (_doc, ret) => {
-    if (ret.amount && ret.amount._bsontype === 'Decimal128') {
-      ret.amount = parseFloat(ret.amount.toString());
-    }
-    return ret;
-  },
-});
