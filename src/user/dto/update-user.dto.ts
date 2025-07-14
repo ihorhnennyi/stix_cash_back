@@ -3,7 +3,6 @@ import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
-  IsNumber,
   IsOptional,
   IsString,
   ValidateNested,
@@ -59,16 +58,18 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
     description: 'User balance in USD',
   })
   @IsOptional()
-  @IsNumber()
-  balance?: number;
+  @Type(() => String)
+  @IsString()
+  balance?: string;
 
   @ApiPropertyOptional({
     example: 0.015,
     description: 'User balance in BTC',
   })
   @IsOptional()
-  @IsNumber()
-  balanceBTC?: number;
+  @Type(() => String)
+  @IsString()
+  balanceBTC?: string;
 
   @ApiPropertyOptional({
     example: 'newAdminPassword123',
