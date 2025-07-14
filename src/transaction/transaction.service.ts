@@ -19,11 +19,15 @@ export class TransactionService {
     dto: CreateTransactionDto,
     createdByAdmin = false,
   ) {
+    if (!Types.ObjectId.isValid(userId)) {
+      throw new Error('Invalid userId');
+    }
+
     const transaction = new this.transactionModel({
       user: new Types.ObjectId(userId),
       type: dto.type,
-      amount: Types.Decimal128.fromString(dto.amount.toString()),
-      balance: Types.Decimal128.fromString(dto.balance.toString()),
+      amount: Types.Decimal128.fromString(dto.amount),
+      balance: Types.Decimal128.fromString(dto.balance),
       currency: dto.currency,
       method: dto.method,
       note: dto.note,
