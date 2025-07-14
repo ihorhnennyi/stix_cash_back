@@ -12,11 +12,11 @@ export class Transaction {
   @Prop({ enum: ['deposit', 'withdrawal'], required: true })
   type: 'deposit' | 'withdrawal';
 
-  @Prop({ type: MongooseSchema.Types.Decimal128, required: true })
-  amount?: Types.Decimal128;
+  @Prop({ type: String, required: true }) // 🔄 теперь строка
+  amount: string;
 
-  @Prop({ type: MongooseSchema.Types.Decimal128, required: false })
-  balance?: Types.Decimal128;
+  @Prop({ type: String, required: false }) // 🔄 теперь строка
+  balance?: string;
 
   @Prop({ enum: ['USD', 'BTC'], required: true })
   currency: 'USD' | 'BTC';

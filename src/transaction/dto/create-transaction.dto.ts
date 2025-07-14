@@ -8,12 +8,12 @@ export class CreateTransactionDto {
   type: 'deposit' | 'withdrawal';
 
   @ApiProperty({ example: '100.5' })
-  @Transform(({ value }) => parseFloat(value))
+  @Transform(({ value }) => value.toString())
   @IsString()
   amount: string;
 
   @ApiProperty({ example: '1200.75', description: 'Баланс после транзакции' })
-  @Transform(({ value }) => parseFloat(value))
+  @Transform(({ value }) => value.toString())
   @IsString()
   balance: string;
 
