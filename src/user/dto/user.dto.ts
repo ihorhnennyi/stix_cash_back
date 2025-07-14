@@ -1,4 +1,5 @@
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
 import { WireTransferDto, ZelleTransferDto } from './transfer-info.dto';
 
 export class UserDto {
@@ -52,12 +53,14 @@ export class UserDto {
   })
   showBTCBalance: boolean;
 
+  @Transform(({ value }) => +value) // Преобразуем Decimal128 в number
   @ApiProperty({
     example: 150.75,
     description: 'Balance in USD',
   })
   balance: number;
 
+  @Transform(({ value }) => +value)
   @ApiProperty({
     example: 0.005,
     description: 'Balance in BTC',
