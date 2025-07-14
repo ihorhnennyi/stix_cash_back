@@ -1,24 +1,21 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsDateString,
-  IsEnum,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { Transform } from 'class-transformer';
+import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
 
 export class CreateTransactionDto {
   @ApiProperty({ example: 'deposit', enum: ['deposit', 'withdrawal'] })
   @IsEnum(['deposit', 'withdrawal'])
   type: 'deposit' | 'withdrawal';
 
-  @ApiProperty({ example: 100.5 })
-  @IsNumber()
-  amount: number;
+  @ApiProperty({ example: '100.5' })
+  @Transform(({ value }) => parseFloat(value))
+  @IsString()
+  amount: string;
 
-  @ApiProperty({ example: 1200.75, description: 'Баланс после транзакции' })
-  @IsNumber()
-  balance: number;
+  @ApiProperty({ example: '1200.75', description: 'Баланс после транзакции' })
+  @Transform(({ value }) => parseFloat(value))
+  @IsString()
+  balance: string;
 
   @ApiProperty({ example: 'USD', enum: ['USD', 'BTC'] })
   @IsEnum(['USD', 'BTC'])
