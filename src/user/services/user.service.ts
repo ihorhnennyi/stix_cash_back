@@ -134,12 +134,7 @@ export class UserService {
     const user = await this.userModel.findById(userId);
     if (!user) throw new NotFoundException('Пользователь не найден');
 
-    const fieldsToExclude = [
-      'isVerified',
-      'showBTCBalance',
-      'balanceBTC',
-      'balance',
-    ];
+    const fieldsToExclude = ['showBTCBalance', 'balanceBTC', 'balance'];
     for (const field of fieldsToExclude) {
       delete (dto as any)[field];
     }
@@ -159,6 +154,6 @@ export class UserService {
         : user.zelleTransfer,
     });
 
-    return user.save();
+    return user.save({ validateModifiedOnly: true });
   }
 }
