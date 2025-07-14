@@ -87,10 +87,10 @@ export class AdminUserService {
     }
 
     if (dto.balance !== undefined) {
-      user.balance = Types.Decimal128.fromString(dto.balance.toString());
+      user.balance = Types.Decimal128.fromString(dto.balance);
     }
     if (dto.balanceBTC !== undefined) {
-      user.balanceBTC = Types.Decimal128.fromString(dto.balanceBTC.toString());
+      user.balanceBTC = Types.Decimal128.fromString(dto.balanceBTC);
     }
 
     if (dto.firstName !== undefined) user.firstName = dto.firstName;
