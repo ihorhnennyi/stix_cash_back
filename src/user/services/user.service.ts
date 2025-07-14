@@ -134,25 +134,29 @@ export class UserService {
     const user = await this.userModel.findById(userId);
     if (!user) throw new NotFoundException('Пользователь не найден');
 
-    const fieldsToExclude = ['showBTCBalance', 'balanceBTC', 'balance'];
-    for (const field of fieldsToExclude) {
-      delete (dto as any)[field];
+    if (dto.firstName !== undefined) user.firstName = dto.firstName;
+    if (dto.lastName !== undefined) user.lastName = dto.lastName;
+    if (dto.email !== undefined) user.email = dto.email;
+    if (dto.phone !== undefined) user.phone = dto.phone;
+    if (dto.country !== undefined) user.country = dto.country;
+    if (dto.paypalAddress !== undefined) user.paypalAddress = dto.paypalAddress;
+    if (dto.walletBTCAddress !== undefined)
+      user.walletBTCAddress = dto.walletBTCAddress;
+
+    if (dto.isTermsAccepted !== undefined)
+      user.isTermsAccepted = dto.isTermsAccepted;
+
+    if (dto.password) {
+      user.password = await bcrypt.hash(dto.password, 10);
     }
 
-    if ((dto as any).password) {
-      user.password = await bcrypt.hash((dto as any).password, 10);
-      delete (dto as any).password;
+    if (dto.wireTransfer) {
+      user.wireTransfer = { ...user.wireTransfer, ...dto.wireTransfer };
     }
 
-    Object.assign(user, {
-      ...dto,
-      wireTransfer: dto.wireTransfer
-        ? { ...user.wireTransfer, ...dto.wireTransfer }
-        : user.wireTransfer,
-      zelleTransfer: dto.zelleTransfer
-        ? { ...user.zelleTransfer, ...dto.zelleTransfer }
-        : user.zelleTransfer,
-    });
+    if (dto.zelleTransfer) {
+      user.zelleTransfer = { ...user.zelleTransfer, ...dto.zelleTransfer };
+    }
 
     return user.save({ validateModifiedOnly: true });
   }
