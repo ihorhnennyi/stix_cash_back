@@ -1,16 +1,10 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
 import { Transform } from 'class-transformer';
-import {
-  IsBooleanString,
-  IsIn,
-  IsNumber,
-  IsOptional,
-  IsString,
-} from 'class-validator';
+import { IsEnum, IsIn, IsNumber, IsOptional, IsString } from 'class-validator';
 
 export class FilterUserDto {
   @ApiPropertyOptional({
-    description: 'Поиск по email (регистронезависимый)',
+    description: 'Search by email (case-insensitive)',
     example: 'example@gmail.com',
   })
   @IsOptional()
@@ -18,7 +12,7 @@ export class FilterUserDto {
   email?: string;
 
   @ApiPropertyOptional({
-    description: 'Фильтрация по роли',
+    description: 'Filter by role',
     example: 'admin',
     enum: ['admin', 'user'],
   })
@@ -27,17 +21,16 @@ export class FilterUserDto {
   role?: string;
 
   @ApiPropertyOptional({
-    description: 'Фильтрация по статусу верификации',
-    example: true,
-    type: Boolean,
+    description: 'Filter by verification status',
+    example: 'pending',
+    enum: ['unverified', 'pending', 'verified'],
   })
   @IsOptional()
-  @IsBooleanString()
-  @Transform(({ value }) => value === 'true')
-  isVerified?: boolean;
+  @IsEnum(['unverified', 'pending', 'verified'])
+  verificationStatus?: 'unverified' | 'pending' | 'verified';
 
   @ApiPropertyOptional({
-    description: 'Минимальный баланс',
+    description: 'Minimum balance',
     example: 0,
   })
   @IsOptional()
@@ -46,7 +39,7 @@ export class FilterUserDto {
   balanceFrom?: number;
 
   @ApiPropertyOptional({
-    description: 'Максимальный баланс',
+    description: 'Maximum balance',
     example: 1000,
   })
   @IsOptional()
@@ -55,7 +48,7 @@ export class FilterUserDto {
   balanceTo?: number;
 
   @ApiPropertyOptional({
-    description: 'Дата создания: от',
+    description: 'Created date from',
     example: '2024-01-01',
   })
   @IsOptional()
@@ -63,7 +56,7 @@ export class FilterUserDto {
   createdFrom?: Date;
 
   @ApiPropertyOptional({
-    description: 'Дата создания: до',
+    description: 'Created date to',
     example: '2024-12-31',
   })
   @IsOptional()
@@ -71,7 +64,7 @@ export class FilterUserDto {
   createdTo?: Date;
 
   @ApiPropertyOptional({
-    description: 'Номер страницы',
+    description: 'Page number',
     example: 1,
   })
   @IsOptional()
@@ -80,7 +73,7 @@ export class FilterUserDto {
   page?: number;
 
   @ApiPropertyOptional({
-    description: 'Лимит записей на страницу',
+    description: 'Items per page',
     example: 20,
   })
   @IsOptional()
@@ -89,7 +82,7 @@ export class FilterUserDto {
   limit?: number;
 
   @ApiPropertyOptional({
-    description: 'Поле сортировки',
+    description: 'Sort field',
     example: 'createdAt',
   })
   @IsOptional()
@@ -97,7 +90,7 @@ export class FilterUserDto {
   sortBy?: string;
 
   @ApiPropertyOptional({
-    description: 'Направление сортировки',
+    description: 'Sort direction',
     example: 'desc',
     enum: ['asc', 'desc'],
   })

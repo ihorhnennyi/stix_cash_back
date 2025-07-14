@@ -30,8 +30,12 @@ export class User {
   @Prop({ type: [String], default: ['user'] })
   roles: string[];
 
-  @Prop({ default: false })
-  isVerified: boolean;
+  @Prop({
+    type: String,
+    enum: ['unverified', 'pending', 'verified'],
+    default: 'unverified',
+  })
+  verificationStatus: 'unverified' | 'pending' | 'verified';
 
   @Prop({ type: [String], default: [] })
   documents: string[];

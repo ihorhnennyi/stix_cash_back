@@ -23,14 +23,8 @@ export class UserDto {
   @ApiProperty({ example: ['user', 'admin'] })
   roles: string[];
 
-  @ApiProperty({ example: true })
-  isVerified: boolean;
-
   @ApiProperty({
-    example: [
-      'https://drive.google.com/file/d/1x234abcd567/view',
-      'https://drive.google.com/file/d/2y234abcd567/view',
-    ],
+    example: ['https://drive.google.com/file/d/1x234abcd567/view'],
   })
   documents: string[];
 
@@ -90,6 +84,13 @@ export class UserDto {
     currency: 'USD' | 'BTC';
     status: 'pending' | 'completed' | 'failed';
   }[];
+
+  @ApiProperty({
+    example: 'pending',
+    enum: ['unverified', 'pending', 'verified'],
+    description: 'User verification status',
+  })
+  verificationStatus: 'unverified' | 'pending' | 'verified';
 
   @ApiProperty({ type: () => WireTransferDto })
   wireTransfer: WireTransferDto;

@@ -2,6 +2,7 @@ import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
 import {
   IsBoolean,
+  IsEnum,
   IsNumber,
   IsOptional,
   IsString,
@@ -46,14 +47,6 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   zelleTransfer?: ZelleTransferDto;
 
   @ApiPropertyOptional({
-    example: true,
-    description: 'Is the user verified?',
-  })
-  @IsOptional()
-  @IsBoolean()
-  isVerified?: boolean;
-
-  @ApiPropertyOptional({
     example: false,
     description: 'Show balance in BTC?',
   })
@@ -84,4 +77,13 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsOptional()
   @IsString()
   password?: string;
+
+  @ApiPropertyOptional({
+    example: 'pending',
+    enum: ['unverified', 'pending', 'verified'],
+    description: 'User verification status',
+  })
+  @IsOptional()
+  @IsEnum(['unverified', 'pending', 'verified'])
+  verificationStatus?: 'unverified' | 'pending' | 'verified';
 }

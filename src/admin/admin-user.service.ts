@@ -24,8 +24,8 @@ export class AdminUserService {
       query.roles = filter.role;
     }
 
-    if (filter?.isVerified !== undefined) {
-      query.isVerified = filter.isVerified;
+    if (filter?.verificationStatus) {
+      query.verificationStatus = filter.verificationStatus;
     }
 
     if (
@@ -98,7 +98,12 @@ export class AdminUserService {
     if (dto.email !== undefined) user.email = dto.email;
     if (dto.phone !== undefined) user.phone = dto.phone;
     if (dto.country !== undefined) user.country = dto.country;
-    if (dto.isVerified !== undefined) user.isVerified = dto.isVerified;
+
+    // ✅ заменили isVerified на verificationStatus
+    if (dto.verificationStatus !== undefined) {
+      user.verificationStatus = dto.verificationStatus;
+    }
+
     if (dto.walletBTCAddress !== undefined)
       user.walletBTCAddress = dto.walletBTCAddress;
     if (dto.paypalAddress !== undefined) user.paypalAddress = dto.paypalAddress;

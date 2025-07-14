@@ -117,6 +117,11 @@ export class UserService {
     );
 
     dbUser.documents.push(fileMeta.webViewLink);
+
+    if (dbUser.verificationStatus === 'unverified') {
+      dbUser.verificationStatus = 'pending';
+    }
+
     await dbUser.save();
 
     return {
