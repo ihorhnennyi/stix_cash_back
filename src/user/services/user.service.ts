@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Injectable,
   Logger,
   NotFoundException,
@@ -156,6 +157,12 @@ export class UserService {
 
     if (dto.zelleTransfer) {
       user.zelleTransfer = { ...user.zelleTransfer, ...dto.zelleTransfer };
+    }
+
+    if (dto['balance'] || dto['balanceBTC']) {
+      throw new BadRequestException(
+        'You are not allowed to update balance fields',
+      );
     }
 
     return user.save({ validateModifiedOnly: true });
