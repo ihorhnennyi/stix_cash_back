@@ -1,5 +1,27 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { IsBoolean, IsEmail, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsEmail,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
+
+class WireTransferDto {
+  @ApiPropertyOptional() @IsOptional() @IsString() firstName?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() lastName?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() accountNumber?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() routingNumber?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() bankName?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() address?: string;
+}
+
+class ZelleTransferDto {
+  @ApiPropertyOptional() @IsOptional() @IsString() recipientName?: string;
+  @ApiPropertyOptional() @IsOptional() @IsEmail() email?: string;
+  @ApiPropertyOptional() @IsOptional() @IsString() phone?: string;
+}
 
 export class UpdateMeDto {
   @ApiPropertyOptional() @IsOptional() @IsString() firstName?: string;
@@ -12,30 +34,23 @@ export class UpdateMeDto {
   @ApiPropertyOptional() @IsOptional() @IsString() paypalAddress?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() walletBTCAddress?: string;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: () => WireTransferDto })
   @IsOptional()
-  wireTransfer?: {
-    firstName?: string;
-    lastName?: string;
-    accountNumber?: string;
-    routingNumber?: string;
-    bankName?: string;
-    address?: string;
-  };
+  @ValidateNested()
+  @Type(() => WireTransferDto)
+  wireTransfer?: WireTransferDto;
 
-  @ApiPropertyOptional()
+  @ApiPropertyOptional({ type: () => ZelleTransferDto })
   @IsOptional()
-  zelleTransfer?: {
-    recipientName?: string;
-    email?: string;
-    phone?: string;
-  };
+  @ValidateNested()
+  @Type(() => ZelleTransferDto)
+  zelleTransfer?: ZelleTransferDto;
 
-  @IsOptional()
-  @IsString()
   @ApiPropertyOptional({
     example: 'newStrongPass123',
     description: 'Новый пароль',
   })
+  @IsOptional()
+  @IsString()
   password?: string;
 }

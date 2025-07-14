@@ -129,10 +129,15 @@ export class UserService {
     const user = await this.userModel.findById(userId);
     if (!user) throw new NotFoundException('Пользователь не найден');
 
-    delete (dto as any).isVerified;
-    delete (dto as any).showBTCBalance;
-    delete (dto as any).balanceBTC;
-    delete (dto as any).balance;
+    const fieldsToExclude = [
+      'isVerified',
+      'showBTCBalance',
+      'balanceBTC',
+      'balance',
+    ];
+    for (const field of fieldsToExclude) {
+      delete (dto as any)[field];
+    }
 
     if ((dto as any).password) {
       user.password = await bcrypt.hash((dto as any).password, 10);
