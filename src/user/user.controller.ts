@@ -8,6 +8,7 @@ import {
   UploadedFile,
   UseGuards,
   UseInterceptors,
+  UsePipes,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -24,6 +25,7 @@ import { JwtAuthGuard } from '../auth/guard/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators/user.decorator';
 import { JwtPayload } from '../common/types/jwt-payload.interface';
 
+import { SanitizeDtoPipe } from 'src/common/pipes/sanitize-user-update.pipe';
 import { UpdateMeDto } from './dto/update-me.dto';
 import { UserDto } from './dto/user.dto';
 import { DocumentService } from './services/document.service';
@@ -51,6 +53,7 @@ export class UserController {
   }
 
   @Patch('me')
+  @UsePipes(SanitizeDtoPipe)
   @ApiOperation({ summary: 'Обновить данные о себе' })
   @ApiResponse({
     status: 200,
@@ -59,12 +62,13 @@ export class UserController {
   })
   async updateMe(
     @CurrentUser() user: JwtPayload,
-    @Body() dto: UpdateMeDto,
+    @Body() rawDto: UpdateMeDto,
   ): Promise<UserDto> {
-    return plainToInstance(
-      UserDto,
-      await this.userService.updateMe(user.sub, dto),
-    );
+    const updatedUser = await this.userService.updateMe(user.sub, rawDto);
+    return plainToInstance(UserDto, updatedUser.toObject(), {
+      enableCircularCheck: true,
+      excludeExtraneousValues: true,
+    });
   }
 
   @Post('documents')

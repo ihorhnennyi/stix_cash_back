@@ -1,5 +1,5 @@
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { Transform, Type } from 'class-transformer';
+import { Type } from 'class-transformer';
 import {
   IsBoolean,
   IsEnum,
@@ -53,21 +53,11 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   @IsBoolean()
   showBTCBalance?: boolean;
 
-  @ApiPropertyOptional({
-    example: '1200.5',
-    description: 'User balance in USD',
-  })
   @IsOptional()
-  @Transform(({ value }) => value?.toString())
   @IsString()
   balance?: string;
 
-  @ApiPropertyOptional({
-    example: '0.015',
-    description: 'User balance in BTC',
-  })
   @IsOptional()
-  @Transform(({ value }) => value?.toString())
   @IsString()
   balanceBTC?: string;
 

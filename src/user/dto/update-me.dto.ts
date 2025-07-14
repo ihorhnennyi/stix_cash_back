@@ -5,6 +5,7 @@ import {
   IsEmail,
   IsOptional,
   IsString,
+  Matches,
   ValidateNested,
 } from 'class-validator';
 
@@ -156,4 +157,16 @@ export class UpdateMeDto {
   @IsOptional()
   @IsString()
   password?: string;
+
+  @IsOptional()
+  @Matches(/^$/, {
+    message: 'You cannot update balance field',
+  })
+  balance?: never;
+
+  @IsOptional()
+  @Matches(/^$/, {
+    message: 'You cannot update balanceBTC field',
+  })
+  balanceBTC?: never;
 }

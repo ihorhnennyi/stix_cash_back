@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import * as bcrypt from 'bcryptjs';
-import { FilterQuery, Model, Types } from 'mongoose';
+import { FilterQuery, Model } from 'mongoose';
 import { UpdateUserDto } from '../user/dto/update-user.dto';
 import { User, UserDocument } from '../user/schema/user.schema';
 import { FilterUserDto } from './dto/filter-user.dto';
@@ -87,10 +87,10 @@ export class AdminUserService {
     }
 
     if (dto.balance !== undefined) {
-      user.balance = Types.Decimal128.fromString(dto.balance);
+      user.balance = dto.balance;
     }
     if (dto.balanceBTC !== undefined) {
-      user.balanceBTC = Types.Decimal128.fromString(dto.balanceBTC);
+      user.balanceBTC = dto.balanceBTC;
     }
 
     if (dto.firstName !== undefined) user.firstName = dto.firstName;

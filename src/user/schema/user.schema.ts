@@ -1,5 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import { Document, SchemaTypes, Types } from 'mongoose';
+import { Document, Types } from 'mongoose';
 import { decimal128ToNumber } from 'src/utils/decimal128ToNumber';
 
 export type UserDocument = User & Document & { _id: Types.ObjectId };
@@ -43,11 +43,11 @@ export class User {
   @Prop({ default: '' })
   googleDriveFolderId: string;
 
-  @Prop({ type: SchemaTypes.Decimal128, default: 0 })
-  balance: any;
+  @Prop({ type: String, default: '0' })
+  balance: string;
 
-  @Prop({ type: SchemaTypes.Decimal128, default: 0 })
-  balanceBTC: any;
+  @Prop({ type: String, default: '0' })
+  balanceBTC: string;
 
   @Prop({ default: false })
   showBTCBalance: boolean;

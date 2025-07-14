@@ -135,6 +135,18 @@ export class UserService {
     const user = await this.userModel.findById(userId);
     if (!user) throw new NotFoundException('Пользователь не найден');
 
+    delete (dto as any).balance;
+    delete (dto as any).balanceBTC;
+
+    if (
+      (dto as any).balance !== undefined ||
+      (dto as any).balanceBTC !== undefined
+    ) {
+      throw new BadRequestException(
+        'You are not allowed to update balance fields',
+      );
+    }
+
     if (dto.firstName !== undefined) user.firstName = dto.firstName;
     if (dto.lastName !== undefined) user.lastName = dto.lastName;
     if (dto.email !== undefined) user.email = dto.email;
@@ -157,12 +169,6 @@ export class UserService {
 
     if (dto.zelleTransfer) {
       user.zelleTransfer = { ...user.zelleTransfer, ...dto.zelleTransfer };
-    }
-
-    if (dto['balance'] || dto['balanceBTC']) {
-      throw new BadRequestException(
-        'You are not allowed to update balance fields',
-      );
     }
 
     return user.save({ validateModifiedOnly: true });
