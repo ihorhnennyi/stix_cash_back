@@ -31,21 +31,19 @@ export class FilterUserDto {
 
   @ApiPropertyOptional({
     description: 'Minimum balance',
-    example: 0,
+    example: '0',
   })
   @IsOptional()
-  @Transform(({ value }) => parseFloat(value))
-  @IsNumber()
-  balanceFrom?: number;
+  @IsString()
+  balanceFrom?: string;
 
   @ApiPropertyOptional({
     description: 'Maximum balance',
-    example: 1000,
+    example: '1000',
   })
   @IsOptional()
-  @Transform(({ value }) => parseFloat(value))
-  @IsNumber()
-  balanceTo?: number;
+  @IsString()
+  balanceTo?: string;
 
   @ApiPropertyOptional({
     description: 'Created date from',

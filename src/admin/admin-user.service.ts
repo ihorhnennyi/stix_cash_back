@@ -99,7 +99,6 @@ export class AdminUserService {
     if (dto.phone !== undefined) user.phone = dto.phone;
     if (dto.country !== undefined) user.country = dto.country;
 
-    // ✅ заменили isVerified на verificationStatus
     if (dto.verificationStatus !== undefined) {
       user.verificationStatus = dto.verificationStatus;
     }

@@ -67,20 +67,22 @@ export class UserDto {
   showBTCBalance: boolean;
 
   @Expose()
-  @Transform(({ value }) => +value)
+  @Transform(({ value }) => value?.toString?.() ?? value)
   @ApiProperty({
-    example: 150.75,
+    example: '150.75',
     description: 'Balance in USD',
+    type: String,
   })
-  balance: number;
+  balance: string;
 
   @Expose()
-  @Transform(({ value }) => +value)
+  @Transform(({ value }) => value?.toString?.() ?? value)
   @ApiProperty({
-    example: 0.005,
+    example: '0.005',
     description: 'Balance in BTC',
+    type: String,
   })
-  balanceBTC: number;
+  balanceBTC: string;
 
   @Expose()
   @ApiProperty({
