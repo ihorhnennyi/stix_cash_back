@@ -1,40 +1,53 @@
 import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { IsBoolean, IsNumber, IsOptional, IsString } from 'class-validator';
+import { Type } from 'class-transformer';
+import {
+  IsBoolean,
+  IsNumber,
+  IsOptional,
+  IsString,
+  ValidateNested,
+} from 'class-validator';
 import { CreateUserDto } from './create-user.dto';
 import { WireTransferDto, ZelleTransferDto } from './transfer-info.dto';
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
   @ApiPropertyOptional({
     example: '1A2b3CbtcAddressHere',
-    description: 'BTC-кошелёк',
+    description: 'Bitcoin wallet address',
   })
   @IsOptional()
+  @IsString()
   walletBTCAddress?: string;
 
   @ApiPropertyOptional({
     example: 'paypal@example.com',
-    description: 'PayPal адрес',
+    description: 'PayPal email address',
   })
   @IsOptional()
+  @IsString()
   paypalAddress?: string;
 
   @ApiPropertyOptional({
-    description: 'Инфо по банковскому переводу (Wire)',
+    description: 'Wire transfer information',
     type: () => WireTransferDto,
   })
   @IsOptional()
+  @ValidateNested()
+  @Type(() => WireTransferDto)
   wireTransfer?: WireTransferDto;
 
   @ApiPropertyOptional({
-    description: 'Инфо для перевода Zelle',
+    description: 'Zelle transfer information',
     type: () => ZelleTransferDto,
   })
   @IsOptional()
+  @ValidateNested()
+  @Type(() => ZelleTransferDto)
   zelleTransfer?: ZelleTransferDto;
 
   @ApiPropertyOptional({
     example: true,
-    description: 'Пользователь верифицирован?',
+    description: 'Is the user verified?',
   })
   @IsOptional()
   @IsBoolean()
@@ -42,7 +55,7 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 
   @ApiPropertyOptional({
     example: false,
-    description: 'Показывать баланс в BTC',
+    description: 'Show balance in BTC?',
   })
   @IsOptional()
   @IsBoolean()
@@ -50,7 +63,7 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 
   @ApiPropertyOptional({
     example: 1200.5,
-    description: 'Баланс пользователя в USD',
+    description: 'User balance in USD',
   })
   @IsOptional()
   @IsNumber()
@@ -58,7 +71,7 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 
   @ApiPropertyOptional({
     example: 0.015,
-    description: 'Баланс пользователя в BTC',
+    description: 'User balance in BTC',
   })
   @IsOptional()
   @IsNumber()
@@ -66,7 +79,7 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 
   @ApiPropertyOptional({
     example: 'newAdminPassword123',
-    description: 'Новый пароль пользователя',
+    description: 'New user password',
   })
   @IsOptional()
   @IsString()

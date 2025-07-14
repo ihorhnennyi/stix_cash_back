@@ -2,23 +2,76 @@ import { ApiProperty } from '@nestjs/swagger';
 import { WireTransferDto, ZelleTransferDto } from './transfer-info.dto';
 
 export class UserDto {
-  @ApiProperty() _id: string;
-  @ApiProperty() firstName: string;
-  @ApiProperty() lastName: string;
-  @ApiProperty() email: string;
-  @ApiProperty() phone: string;
-  @ApiProperty() country: string;
-  @ApiProperty() roles: string[];
-  @ApiProperty() isVerified: boolean;
-  @ApiProperty() documents: string[];
-  @ApiProperty() googleDriveFolderId: string;
-  @ApiProperty() walletBTCAddress: string;
-  @ApiProperty() paypalAddress: string;
-  @ApiProperty() showBTCBalance: boolean;
-  @ApiProperty({ type: 'number', example: 100.5 }) balance: number;
-  @ApiProperty({ type: 'number', example: 0.005 }) balanceBTC: number;
+  @ApiProperty({ example: '64d7b2f3d234f0f4dcbf9999' })
+  _id: string;
+
+  @ApiProperty({ example: 'John' })
+  firstName: string;
+
+  @ApiProperty({ example: 'Doe' })
+  lastName: string;
+
+  @ApiProperty({ example: 'john@example.com' })
+  email: string;
+
+  @ApiProperty({ example: '+1234567890' })
+  phone: string;
+
+  @ApiProperty({ example: 'USA' })
+  country: string;
+
+  @ApiProperty({ example: ['user', 'admin'] })
+  roles: string[];
+
+  @ApiProperty({ example: true })
+  isVerified: boolean;
 
   @ApiProperty({
+    example: [
+      'https://drive.google.com/file/d/1x234abcd567/view',
+      'https://drive.google.com/file/d/2y234abcd567/view',
+    ],
+  })
+  documents: string[];
+
+  @ApiProperty({
+    example: '1A2B3C4D5GoogleDriveFolderID',
+    description: "User's folder ID in Google Drive",
+  })
+  googleDriveFolderId: string;
+
+  @ApiProperty({
+    example: 'bc1qexampleaddressbtc',
+    description: 'BTC wallet address',
+  })
+  walletBTCAddress: string;
+
+  @ApiProperty({
+    example: 'paypal@example.com',
+    description: 'PayPal email address',
+  })
+  paypalAddress: string;
+
+  @ApiProperty({
+    example: true,
+    description: 'Whether to display balance in BTC',
+  })
+  showBTCBalance: boolean;
+
+  @ApiProperty({
+    example: 150.75,
+    description: 'Balance in USD',
+  })
+  balance: number;
+
+  @ApiProperty({
+    example: 0.005,
+    description: 'Balance in BTC',
+  })
+  balanceBTC: number;
+
+  @ApiProperty({
+    description: "User's transaction history",
     type: 'array',
     example: [
       {
