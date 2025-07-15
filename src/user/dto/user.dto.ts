@@ -34,12 +34,6 @@ export class UserDto {
 
   @Expose()
   @ApiProperty({
-    example: ['https://drive.google.com/file/d/1x234abcd567/view'],
-  })
-  documents: string[];
-
-  @Expose()
-  @ApiProperty({
     example: '1A2B3C4D5GoogleDriveFolderID',
     description: "User's folder ID in Google Drive",
   })

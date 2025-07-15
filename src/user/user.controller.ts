@@ -49,7 +49,11 @@ export class UserController {
     type: UserDto,
   })
   async getProfile(@CurrentUser() user: JwtPayload): Promise<UserDto> {
-    return plainToInstance(UserDto, await this.userService.getMe(user.sub));
+    const dbUser = await this.userService.getMe(user.sub);
+    return plainToInstance(UserDto, dbUser.toObject(), {
+      enableCircularCheck: true,
+      excludeExtraneousValues: true,
+    });
   }
 
   @Patch('me')
@@ -120,17 +124,5 @@ export class UserController {
     );
 
     return result;
-  }
-
-  @Get('documents')
-  @ApiOperation({ summary: 'Получить список документов пользователя' })
-  @ApiResponse({
-    status: 200,
-    description: 'Документы получены',
-    type: [String],
-  })
-  async getDocuments(@CurrentUser() user: JwtPayload): Promise<string[]> {
-    const dbUser = await this.userService.getMe(user.sub);
-    return dbUser.documents;
   }
 }

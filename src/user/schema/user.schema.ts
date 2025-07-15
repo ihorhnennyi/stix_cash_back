@@ -36,9 +36,6 @@ export class User {
   })
   verificationStatus: 'unverified' | 'pending' | 'verified';
 
-  @Prop({ type: [String], default: [] })
-  documents: string[];
-
   @Prop({ default: '' })
   googleDriveFolderId: string;
 
