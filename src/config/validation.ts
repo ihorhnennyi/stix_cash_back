@@ -16,11 +16,15 @@ export const validationSchema = Joi.object({
   ROOT_ADMIN_EMAIL: Joi.string().email().required(),
   ROOT_ADMIN_PASSWORD: Joi.string().min(6).required(),
 
-  GOOGLE_KEY_FILE: Joi.string().required(),
-  GOOGLE_DRIVE_SHARE_EMAIL: Joi.string().email().required(),
-  GOOGLE_DRIVE_OWNER: Joi.string().email().required(),
-  GOOGLE_SERVICE_EMAIL: Joi.string().email().required(),
+  // 🧠 Только OAuth 2.0 Client
+  GOOGLE_CLIENT_ID: Joi.string().required(),
+  GOOGLE_CLIENT_SECRET: Joi.string().required(),
+  GOOGLE_REDIRECT_URI: Joi.string().uri().required(),
+  GOOGLE_REFRESH_TOKEN: Joi.string().required(),
+
+  // 🎯 Папка и владелец
   GOOGLE_DRIVE_PARENT_FOLDER_ID: Joi.string().required(),
+  GOOGLE_DRIVE_OWNER: Joi.string().email().required(),
 
   FRONTEND_URL: Joi.string().uri().default('http://localhost:5173'),
 });

@@ -99,30 +99,27 @@ export class UserController {
   })
   async uploadPhoto(
     @UploadedFile()
-    file: {
-      originalname: string;
-      mimetype: string;
-      buffer: ArrayBuffer | Buffer | Buffer[];
-    },
+    file: Express.Multer.File,
     @CurrentUser() user: JwtPayload,
   ) {
-    if (!file) throw new BadRequestException('Файл не был передан');
+    if (!file || !file.buffer)
+      throw new BadRequestException('Файл не был передан');
 
     const normalizedFile = {
-      ...file,
-      buffer: Array.isArray(file.buffer) ? file.buffer[0] : file.buffer,
+      originalname: file.originalname,
+      mimetype: file.mimetype,
+      buffer:
+        file.buffer instanceof Buffer
+          ? file.buffer
+          : Buffer.from(file.buffer as unknown as ArrayBuffer),
     };
 
-    const { fileId, webViewLink } = await this.userService.uploadFileToDrive(
+    const result = await this.userService.uploadFileToDrive(
       normalizedFile,
       user,
     );
 
-    return {
-      message: 'Файл успешно загружен',
-      fileId,
-      webViewLink,
-    };
+    return result;
   }
 
   @Get('documents')

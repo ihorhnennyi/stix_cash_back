@@ -1,5 +1,7 @@
 import {
   BadRequestException,
+  forwardRef,
+  Inject,
   Injectable,
   Logger,
   NotFoundException,
@@ -15,6 +17,7 @@ import { JwtPayload } from '../../common/types/jwt-payload.interface';
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateMeDto } from '../dto/update-me.dto';
 import { User, UserDocument } from '../schema/user.schema';
+import { DocumentService } from './document.service';
 
 @Injectable()
 export class UserService {
@@ -24,6 +27,8 @@ export class UserService {
     @InjectModel(User.name)
     private readonly userModel: Model<UserDocument>,
     private readonly googleDriveService: GoogleDriveService,
+    @Inject(forwardRef(() => DocumentService))
+    private readonly documentService: DocumentService,
   ) {}
 
   async createUser(dto: CreateUserDto): Promise<UserDocument> {
@@ -47,7 +52,7 @@ export class UserService {
     const user = await newUser.save();
 
     try {
-      const parentId = this.googleDriveService.createMainFolderIfNotExists();
+      const parentId = this.googleDriveService.getFolderId();
       const folderId = await this.googleDriveService.getOrCreateUserFolder(
         user._id.toString(),
         parentId,
@@ -76,9 +81,9 @@ export class UserService {
   }
 
   async getMe(id: string): Promise<UserDocument> {
-    const user = await this.userModel.findById(id).select('-password').lean();
+    const user = await this.userModel.findById(id).select('-password');
     if (!user) throw new NotFoundException('Пользователь не найден');
-    return user as UserDocument;
+    return user;
   }
 
   async uploadFileToDrive(
@@ -88,10 +93,24 @@ export class UserService {
       buffer: Buffer | ArrayBuffer;
     },
     user: JwtPayload,
-  ): Promise<{ fileId: string; webViewLink: string }> {
+  ): Promise<{
+    message: string;
+    file: {
+      fileId: string;
+      webViewLink: string;
+      name: string;
+    };
+  }> {
     const dbUser = await this.getMe(user.sub);
+
     if (!dbUser.googleDriveFolderId) {
-      throw new Error('Google Drive folder not found for user');
+      const parentFolderId = this.googleDriveService.getFolderId();
+      const folderId = await this.googleDriveService.getOrCreateUserFolder(
+        dbUser._id.toString(),
+        parentFolderId,
+      );
+      dbUser.googleDriveFolderId = folderId;
+      await dbUser.save();
     }
 
     const buffer =
@@ -104,17 +123,27 @@ export class UserService {
       dbUser.googleDriveFolderId,
     );
 
-    dbUser.documents.push(fileMeta.webViewLink);
+    console.log('File uploaded to Google Drive:', fileMeta);
+
+    const savedDoc = await this.documentService.create({
+      user: dbUser._id.toString(),
+      name: file.originalname,
+      fileId: fileMeta.id,
+      webViewLink: fileMeta.webViewLink,
+    });
 
     if (dbUser.verificationStatus === 'unverified') {
       dbUser.verificationStatus = 'pending';
+      await dbUser.save();
     }
 
-    await dbUser.save();
-
     return {
-      fileId: fileMeta.id,
-      webViewLink: fileMeta.webViewLink,
+      message: 'Файл успешно загружен',
+      file: {
+        fileId: fileMeta.id,
+        webViewLink: fileMeta.webViewLink,
+        name: file.originalname,
+      },
     };
   }
 

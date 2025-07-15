@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { forwardRef, Module } from '@nestjs/common';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { AuthModule } from '../auth/auth.module';
@@ -19,10 +19,11 @@ import { UserController } from './user.controller';
       { name: User.name, schema: UserSchema },
       { name: UserDocument.name, schema: UserDocumentSchema },
     ]),
-    CommonModule,
-    AuthModule,
+    forwardRef(() => CommonModule),
+    forwardRef(() => AuthModule),
   ],
   providers: [UserService, DocumentService],
   controllers: [UserController, UserAuthController],
+  exports: [UserService],
 })
 export class UserModule {}
