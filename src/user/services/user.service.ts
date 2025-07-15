@@ -11,7 +11,6 @@ import { Model } from 'mongoose';
 
 import { GoogleDriveService } from '../../common/services/google-drive.service';
 import { JwtPayload } from '../../common/types/jwt-payload.interface';
-import { decimal128ToNumber } from '../../utils/decimal128ToNumber';
 
 import { CreateUserDto } from '../dto/create-user.dto';
 import { UpdateMeDto } from '../dto/update-me.dto';
@@ -77,21 +76,9 @@ export class UserService {
   }
 
   async getMe(id: string): Promise<UserDocument> {
-    const user = await this.userModel
-      .findById(id)
-      .select('-password')
-      .lean(false);
-
-    if (!user) {
-      throw new NotFoundException('Пользователь не найден');
-    }
-
-    const doc = user.toObject();
-
-    doc.balance = decimal128ToNumber(user.balance);
-    doc.balanceBTC = decimal128ToNumber(user.balanceBTC);
-
-    return doc as UserDocument;
+    const user = await this.userModel.findById(id).select('-password').lean();
+    if (!user) throw new NotFoundException('Пользователь не найден');
+    return user as UserDocument;
   }
 
   async uploadFileToDrive(

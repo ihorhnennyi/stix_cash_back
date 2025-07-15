@@ -1,6 +1,5 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
-import { decimal128ToNumber } from 'src/utils/decimal128ToNumber';
 
 export type UserDocument = User & Document & { _id: Types.ObjectId };
 
@@ -57,7 +56,7 @@ export class User {
       {
         date: { type: Date, default: Date.now },
         type: { type: String, enum: ['deposit', 'withdrawal'], required: true },
-        amount: { type: Number, required: true },
+        amount: { type: String, required: true },
         currency: { type: String, enum: ['USD', 'BTC'], required: true },
         status: {
           type: String,
@@ -71,7 +70,7 @@ export class User {
   transactions: {
     date: Date;
     type: 'deposit' | 'withdrawal';
-    amount: number;
+    amount: string;
     currency: 'USD' | 'BTC';
     status: 'pending' | 'completed' | 'failed';
   }[];
@@ -118,17 +117,3 @@ export class User {
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
-
-UserSchema.set('toJSON', {
-  transform: (_doc, ret) => {
-    if (ret.balance && ret.balance._bsontype === 'Decimal128') {
-      ret.balance = decimal128ToNumber(ret.balance);
-    }
-
-    if (ret.balanceBTC && ret.balanceBTC._bsontype === 'Decimal128') {
-      ret.balanceBTC = decimal128ToNumber(ret.balanceBTC);
-    }
-
-    return ret;
-  },
-});

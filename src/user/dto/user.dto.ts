@@ -86,28 +86,6 @@ export class UserDto {
 
   @Expose()
   @ApiProperty({
-    description: "User's transaction history",
-    type: 'array',
-    example: [
-      {
-        date: '2024-07-01T12:00:00Z',
-        type: 'deposit',
-        amount: 100,
-        currency: 'USD',
-        status: 'completed',
-      },
-    ],
-  })
-  transactions: {
-    date: Date;
-    type: 'deposit' | 'withdrawal';
-    amount: number;
-    currency: 'USD' | 'BTC';
-    status: 'pending' | 'completed' | 'failed';
-  }[];
-
-  @Expose()
-  @ApiProperty({
     example: 'pending',
     enum: ['unverified', 'pending', 'verified'],
     description: 'User verification status',
