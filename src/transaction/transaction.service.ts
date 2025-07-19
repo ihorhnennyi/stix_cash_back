@@ -5,6 +5,7 @@ import { Model, Types } from 'mongoose';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { FilterTransactionsDto } from './dto/filter-transactions.dto';
 import { UpdateTransactionStatusDto } from './dto/update-transaction-status.dto';
+import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { Transaction, TransactionDocument } from './schemas/transaction.schema';
 
 @Injectable()
@@ -45,6 +46,29 @@ export class TransactionService {
     if (!transaction) throw new NotFoundException('Транзакция не найдена');
 
     transaction.status = dto.status;
+    return transaction.save();
+  }
+
+  async updateByAdmin(id: string, dto: UpdateTransactionDto) {
+    const transaction = await this.transactionModel.findById(id);
+    if (!transaction) throw new NotFoundException('Транзакция не найдена');
+
+    if (dto.type) transaction.type = dto.type;
+    if (dto.amount) transaction.amount = dto.amount;
+    if (dto.balance) transaction.balance = dto.balance;
+    if (dto.currency) transaction.currency = dto.currency;
+    if (dto.method)
+      transaction.method = dto.method as
+        | 'walletBTCAddress'
+        | 'wireTransfer'
+        | 'zelleTransfer'
+        | 'paypalAddress';
+
+    if (dto.note) transaction.note = dto.note;
+    if (dto.date) transaction.date = dto.date;
+    if (dto.transactionId) transaction.transactionId = dto.transactionId;
+    if (dto.status) transaction.status = dto.status;
+
     return transaction.save();
   }
 

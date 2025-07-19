@@ -26,6 +26,7 @@ import { Role } from '../types/role.enum';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { FilterTransactionsDto } from './dto/filter-transactions.dto';
 import { UpdateTransactionStatusDto } from './dto/update-transaction-status.dto';
+import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { TransactionService } from './transaction.service';
 
 @ApiTags('Транзакции')
@@ -55,6 +56,19 @@ export class TransactionController {
     @Body() dto: CreateTransactionDto,
   ) {
     return this.transactionService.create(userId, dto, true);
+  }
+
+  @Patch(':id')
+  @Roles(Role.Admin)
+  @UseGuards(RolesGuard)
+  @ApiOperation({ summary: 'Редактировать транзакцию (админ)' })
+  @ApiResponse({ status: 200, description: 'Транзакция обновлена' })
+  @ApiResponse({ status: 404, description: 'Транзакция не найдена' })
+  async updateTransaction(
+    @Param('id') id: string,
+    @Body() dto: UpdateTransactionDto,
+  ) {
+    return this.transactionService.updateByAdmin(id, dto);
   }
 
   @ApiOperation({ summary: 'Обновить статус транзакции (админ)' })
