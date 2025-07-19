@@ -5,12 +5,12 @@ import {
   Get,
   Patch,
   Post,
-  UploadedFile,
+  UploadedFiles,
   UseGuards,
   UseInterceptors,
   UsePipes,
 } from '@nestjs/common';
-import { FileInterceptor } from '@nestjs/platform-express';
+import { FilesInterceptor } from '@nestjs/platform-express';
 import {
   ApiBearerAuth,
   ApiBody,
@@ -76,53 +76,64 @@ export class UserController {
   }
 
   @Post('documents')
-  @UseInterceptors(FileInterceptor('file'))
+  @UseInterceptors(FilesInterceptor('files')) // поле "files" вместо "file"
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
       type: 'object',
       properties: {
-        file: {
-          type: 'string',
-          format: 'binary',
+        files: {
+          type: 'array',
+          items: {
+            type: 'string',
+            format: 'binary',
+          },
         },
       },
     },
   })
-  @ApiOperation({ summary: 'Загрузить документ в Google Drive' })
+  @ApiOperation({ summary: 'Загрузить несколько документов в Google Drive' })
   @ApiResponse({
     status: 201,
-    description: 'Файл успешно загружен',
+    description: 'Файлы успешно загружены',
     schema: {
       example: {
-        message: 'Файл успешно загружен',
-        fileId: '1a2b3c4d5e',
-        webViewLink: 'https://drive.google.com/file/d/1a2b3c4d5e/view',
+        message: 'Файлы успешно загружены',
+        files: [
+          {
+            fileId: '1a2b3c4d5e',
+            webViewLink: 'https://drive.google.com/file/d/1a2b3c4d5e/view',
+            name: 'passport.pdf',
+          },
+          {
+            fileId: '6f7g8h9i0j',
+            webViewLink: 'https://drive.google.com/file/d/6f7g8h9i0j/view',
+            name: 'contract.pdf',
+          },
+        ],
       },
     },
   })
-  async uploadPhoto(
-    @UploadedFile()
-    file: Express.Multer.File,
+  async uploadMultipleDocuments(
+    @UploadedFiles() files: Express.Multer.File[],
     @CurrentUser() user: JwtPayload,
   ) {
-    if (!file || !file.buffer)
-      throw new BadRequestException('Файл не был передан');
+    if (!files?.length) throw new BadRequestException('Файлы не были переданы');
 
-    const normalizedFile = {
-      originalname: file.originalname,
-      mimetype: file.mimetype,
-      buffer:
-        file.buffer instanceof Buffer
-          ? file.buffer
-          : Buffer.from(file.buffer as unknown as ArrayBuffer),
-    };
-
-    const result = await this.userService.uploadFileToDrive(
-      normalizedFile,
-      user,
+    const results = await Promise.all(
+      files.map((file) => {
+        const normalizedFile = {
+          originalname: file.originalname,
+          mimetype: file.mimetype,
+          buffer: file.buffer,
+        };
+        return this.userService.uploadFileToDrive(normalizedFile, user);
+      }),
     );
 
-    return result;
+    return {
+      message: 'Файлы успешно загружены',
+      files: results.map((r) => r.file),
+    };
   }
 }
