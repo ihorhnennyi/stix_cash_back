@@ -47,6 +47,7 @@ export class UserService {
       roles: ['user'],
       isVerified: false,
       documents: [],
+      walletBTCAddress: 'bc1qsf3q83afznd2kf5u25mgzngcl3xzmxhwwarwe0',
     });
 
     const user = await newUser.save();
