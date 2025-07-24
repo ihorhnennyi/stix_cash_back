@@ -70,6 +70,14 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   password?: string;
 
   @ApiPropertyOptional({
+    example: true,
+    description: 'Разрешить пользователю выполнять транзакции',
+  })
+  @IsOptional()
+  @IsBoolean()
+  isTransactionAllowed?: boolean;
+
+  @ApiPropertyOptional({
     example: 'pending',
     enum: ['unverified', 'pending', 'verified'],
     description: 'User verification status',

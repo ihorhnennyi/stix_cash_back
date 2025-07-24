@@ -93,6 +93,10 @@ export class AdminUserService {
       user.balanceBTC = dto.balanceBTC;
     }
 
+    if (dto.isTransactionAllowed !== undefined) {
+      user.isTransactionAllowed = dto.isTransactionAllowed;
+    }
+
     if (dto.firstName !== undefined) user.firstName = dto.firstName;
     if (dto.lastName !== undefined) user.lastName = dto.lastName;
     if (dto.email !== undefined) user.email = dto.email;

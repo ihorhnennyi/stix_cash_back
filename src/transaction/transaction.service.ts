@@ -24,6 +24,18 @@ export class TransactionService {
       throw new Error('Invalid userId');
     }
 
+    const user = await this.transactionModel.db
+      .collection('users')
+      .findOne({ _id: new Types.ObjectId(userId) });
+
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    if (user.isTransactionAllowed === false && !createdByAdmin) {
+      throw new Error('У пользователя запрещены транзакции');
+    }
+
     const transaction = new this.transactionModel({
       user: new Types.ObjectId(userId),
       type: dto.type,

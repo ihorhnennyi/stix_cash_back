@@ -80,6 +80,13 @@ export class UserDto {
 
   @Expose()
   @ApiProperty({
+    example: true,
+    description: 'Разрешены ли транзакции для пользователя',
+  })
+  isTransactionAllowed: boolean;
+
+  @Expose()
+  @ApiProperty({
     example: 'pending',
     enum: ['unverified', 'pending', 'verified'],
     description: 'User verification status',

@@ -48,6 +48,9 @@ export class User {
   @Prop({ default: false })
   showBTCBalance: boolean;
 
+  @Prop({ default: false })
+  isTransactionAllowed: boolean;
+
   @Prop({
     type: [
       {
