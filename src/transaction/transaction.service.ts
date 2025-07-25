@@ -32,9 +32,9 @@ export class TransactionService {
       throw new NotFoundException('Пользователь не найден');
     }
 
-    if (user.isTransactionAllowed === false && !createdByAdmin) {
-      throw new Error('У пользователя запрещены транзакции');
-    }
+    // if (user.isTransactionAllowed === false && !createdByAdmin) {
+    //   throw new Error('У пользователя запрещены транзакции');
+    // }
 
     const transaction = new this.transactionModel({
       user: new Types.ObjectId(userId),
