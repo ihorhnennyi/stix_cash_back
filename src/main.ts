@@ -1,6 +1,8 @@
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import { AdminService } from './admin/admin.service';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -50,14 +52,33 @@ async function bootstrap() {
     },
   });
 
-  const PORT = process.env.PORT ?? 3000;
+  const configService = app.get(ConfigService);
+  const PORT = configService.get<number>('PORT') ?? 3000;
   await app.listen(PORT);
 
-  console.log(`Stix Cash Backend is running!`);
-  console.log(`API available at: http://localhost:${PORT}/api`);
-  console.log(`Swagger Docs:    http://localhost:${PORT}/api/docs`);
+  console.log(`🚀 Stix Cash Backend is running on: http://localhost:${PORT}`);
+  console.log(`📚 Swagger Docs: http://localhost:${PORT}/api/docs`);
+
+  // ✅ Автоматическое создание root-админа
+  const adminService = app.get(AdminService);
+  const rootEmail = configService.get<string>('ROOT_ADMIN_EMAIL');
+  const rootPassword = configService.get<string>('ROOT_ADMIN_PASSWORD');
+
+  if (rootEmail && rootPassword) {
+    const existingAdmin = await adminService.findByEmail(rootEmail);
+    if (!existingAdmin) {
+      await adminService.createAdmin(rootEmail, rootPassword);
+      console.log(`✅ Root admin created: ${rootEmail}`);
+    } else {
+      console.log(`ℹ️ Root admin already exists: ${rootEmail}`);
+    }
+  } else {
+    console.warn(
+      '⚠️ ROOT_ADMIN_EMAIL or ROOT_ADMIN_PASSWORD is missing in .env',
+    );
+  }
 }
 
 bootstrap().catch((err) => {
-  console.error('Error during bootstrap:', err);
+  console.error('❌ Error during bootstrap:', err);
 });
