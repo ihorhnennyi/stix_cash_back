@@ -5,7 +5,6 @@ import {
   IsEmail,
   IsOptional,
   IsString,
-  Matches,
   ValidateNested,
 } from 'class-validator';
 
@@ -159,14 +158,18 @@ export class UpdateMeDto {
   password?: string;
 
   @IsOptional()
-  @Matches(/^$/, {
-    message: 'You cannot update balance field',
+  @IsString()
+  @ApiPropertyOptional({
+    example: '100.50',
+    description: 'User balance in USD',
   })
-  balance?: never;
+  balance?: string;
 
   @IsOptional()
-  @Matches(/^$/, {
-    message: 'You cannot update balanceBTC field',
+  @IsString()
+  @ApiPropertyOptional({
+    example: '0.0032',
+    description: 'User balance in BTC',
   })
-  balanceBTC?: never;
+  balanceBTC?: string;
 }
