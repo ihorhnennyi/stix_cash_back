@@ -32,15 +32,11 @@ export class TransactionService {
       throw new NotFoundException('Пользователь не найден');
     }
 
-    // if (user.isTransactionAllowed === false && !createdByAdmin) {
-    //   throw new Error('У пользователя запрещены транзакции');
-    // }
-
     const transaction = new this.transactionModel({
       user: new Types.ObjectId(userId),
       type: dto.type,
-      amount: Types.Decimal128.fromString(dto.amount),
-      balance: Types.Decimal128.fromString(dto.balance),
+      amount: dto.amount,
+      balance: dto.balance,
       currency: dto.currency,
       method: dto.method,
       note: dto.note,
@@ -50,7 +46,9 @@ export class TransactionService {
       createdByAdmin,
     });
 
-    return transaction.save();
+    const saved = await transaction.save();
+
+    return this.transactionModel.findById(saved._id).populate('user');
   }
 
   async updateStatus(id: string, dto: UpdateTransactionStatusDto) {
