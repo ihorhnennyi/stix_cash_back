@@ -1,5 +1,4 @@
 import {
-  BadRequestException,
   forwardRef,
   Inject,
   Injectable,
@@ -152,17 +151,17 @@ export class UserService {
     const user = await this.userModel.findById(userId);
     if (!user) throw new NotFoundException('Пользователь не найден');
 
-    delete (dto as any).balance;
-    delete (dto as any).balanceBTC;
+    // delete (dto as any).balance;
+    // delete (dto as any).balanceBTC;
 
-    if (
-      (dto as any).balance !== undefined ||
-      (dto as any).balanceBTC !== undefined
-    ) {
-      throw new BadRequestException(
-        'You are not allowed to update balance fields',
-      );
-    }
+    // if (
+    //   (dto as any).balance !== undefined ||
+    //   (dto as any).balanceBTC !== undefined
+    // ) {
+    //   throw new BadRequestException(
+    //     'You are not allowed to update balance fields',
+    //   );
+    // }
 
     if (dto.firstName !== undefined) user.firstName = dto.firstName;
     if (dto.lastName !== undefined) user.lastName = dto.lastName;
@@ -178,6 +177,14 @@ export class UserService {
 
     if (dto.password) {
       user.password = await bcrypt.hash(dto.password, 10);
+    }
+
+    if (dto.balance !== undefined) {
+      user.balance = dto.balance;
+    }
+
+    if (dto.balanceBTC !== undefined) {
+      user.balanceBTC = dto.balanceBTC;
     }
 
     if (dto.wireTransfer) {
