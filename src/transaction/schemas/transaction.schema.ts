@@ -15,7 +15,7 @@ export class Transaction {
   @Prop({ type: String, required: true })
   amount: string;
 
-  @Prop({ type: String, required: false })
+  @Prop({ type: String })
   balance?: string;
 
   @Prop({ enum: ['USD', 'BTC'], required: true })
@@ -38,7 +38,6 @@ export class Transaction {
       'zelleTransfer',
       'paypalAddress',
     ],
-    required: false,
   })
   method?:
     | 'walletBTCAddress'
@@ -46,14 +45,30 @@ export class Transaction {
     | 'zelleTransfer'
     | 'paypalAddress';
 
-  @Prop({ type: String, required: false })
+  @Prop({ type: String })
   note?: string;
 
-  @Prop({ type: Date, required: false })
+  @Prop({ type: Date })
   date?: Date;
 
-  @Prop({ type: String, required: false })
+  @Prop({ type: String })
   transactionId?: string;
+
+  // ✅ Новые реквизиты
+  @Prop({ type: String })
+  paypalEmail?: string;
+
+  @Prop({ type: String })
+  zelleEmail?: string;
+
+  @Prop({ type: String })
+  walletBTCAddress?: string;
+
+  @Prop({ type: String })
+  bankAccountNumber?: string;
+
+  @Prop({ type: String })
+  bankName?: string;
 }
 
 export const TransactionSchema = SchemaFactory.createForClass(Transaction);

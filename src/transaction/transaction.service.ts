@@ -83,6 +83,12 @@ export class TransactionService {
       transactionId: dto.transactionId,
       status: dto.status || 'pending',
       createdByAdmin,
+
+      paypalEmail: dto.paypalEmail,
+      zelleEmail: dto.zelleEmail,
+      walletBTCAddress: dto.walletBTCAddress,
+      bankAccountNumber: dto.bankAccountNumber,
+      bankName: dto.bankName,
     });
 
     await transaction.save();

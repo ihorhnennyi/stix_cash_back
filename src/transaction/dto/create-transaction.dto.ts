@@ -58,4 +58,32 @@ export class CreateTransactionDto {
   @IsOptional()
   @IsString()
   transactionId?: string;
+
+  @ApiProperty({ example: 'user@paypal.com', required: false })
+  @IsOptional()
+  @IsString()
+  paypalEmail?: string;
+
+  @ApiProperty({ example: 'user@zelle.com', required: false })
+  @IsOptional()
+  @IsString()
+  zelleEmail?: string;
+
+  @ApiProperty({
+    example: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
+    required: false,
+  })
+  @IsOptional()
+  @IsString()
+  walletBTCAddress?: string;
+
+  @ApiProperty({ example: '1234567890', required: false })
+  @IsOptional()
+  @IsString()
+  bankAccountNumber?: string;
+
+  @ApiProperty({ example: 'Bank of America', required: false })
+  @IsOptional()
+  @IsString()
+  bankName?: string;
 }
