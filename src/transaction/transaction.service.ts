@@ -37,6 +37,17 @@ export class TransactionService {
       throw new NotFoundException('Пользователь не найден');
     }
 
+    const pendingExists = await this.transactionModel.exists({
+      user: new Types.ObjectId(userId),
+      status: 'pending',
+    });
+
+    if (pendingExists) {
+      throw new BadRequestException(
+        'Невозможно создать новую транзакцию: есть ожидающая (pending) транзакция',
+      );
+    }
+
     const amount = new Big(dto.amount || '0');
     if (amount.lte(0)) {
       throw new BadRequestException('Amount must be greater than zero');
@@ -70,13 +81,12 @@ export class TransactionService {
       note: dto.note,
       date: dto.date,
       transactionId: dto.transactionId,
-      status: dto.status,
+      status: dto.status || 'pending',
       createdByAdmin,
     });
 
     await transaction.save();
 
-    // Обновляем баланс пользователя
     const balanceField = dto.currency === 'BTC' ? 'balanceBTC' : 'balance';
     await this.transactionModel.db
       .collection('users')
