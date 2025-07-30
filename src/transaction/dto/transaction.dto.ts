@@ -48,6 +48,10 @@ export class TransactionDto {
   transactionId?: string;
 
   @Expose()
+  @ApiProperty({ required: false, description: 'Дополнительные реквизиты' })
+  paymentDetails?: Record<string, any>;
+
+  @Expose()
   @ApiProperty()
   createdAt: Date;
 

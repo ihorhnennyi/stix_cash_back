@@ -54,21 +54,8 @@ export class Transaction {
   @Prop({ type: String })
   transactionId?: string;
 
-  // ✅ Новые реквизиты
-  @Prop({ type: String })
-  paypalEmail?: string;
-
-  @Prop({ type: String })
-  zelleEmail?: string;
-
-  @Prop({ type: String })
-  walletBTCAddress?: string;
-
-  @Prop({ type: String })
-  bankAccountNumber?: string;
-
-  @Prop({ type: String })
-  bankName?: string;
+  @Prop({ type: Object })
+  paymentDetails?: Record<string, any>;
 }
 
 export const TransactionSchema = SchemaFactory.createForClass(Transaction);

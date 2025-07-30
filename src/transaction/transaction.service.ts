@@ -71,29 +71,36 @@ export class TransactionService {
       throw new BadRequestException('Неверный тип транзакции');
     }
 
+    const {
+      type,
+      amount: dtoAmount,
+      currency,
+      method,
+      note,
+      date,
+      transactionId,
+      status,
+      ...paymentDetails
+    } = dto;
+
     const transaction = new this.transactionModel({
       user: new Types.ObjectId(userId),
-      type: dto.type,
-      amount: dto.amount,
+      type,
+      amount: dtoAmount,
       balance: updatedBalance.toString(),
-      currency: dto.currency,
-      method: dto.method,
-      note: dto.note,
-      date: dto.date,
-      transactionId: dto.transactionId,
-      status: dto.status || 'pending',
+      currency,
+      method,
+      note,
+      date,
+      transactionId,
+      status: status || 'pending',
       createdByAdmin,
-
-      paypalEmail: dto.paypalEmail,
-      zelleEmail: dto.zelleEmail,
-      walletBTCAddress: dto.walletBTCAddress,
-      bankAccountNumber: dto.bankAccountNumber,
-      bankName: dto.bankName,
+      ...paymentDetails,
     });
 
     await transaction.save();
 
-    const balanceField = dto.currency === 'BTC' ? 'balanceBTC' : 'balance';
+    const balanceField = currency === 'BTC' ? 'balanceBTC' : 'balance';
     await this.transactionModel.db
       .collection('users')
       .updateOne(

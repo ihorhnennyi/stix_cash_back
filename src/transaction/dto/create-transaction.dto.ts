@@ -1,6 +1,11 @@
-// src/transactions/dto/create-transaction.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
-import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
+import {
+  IsDateString,
+  IsEnum,
+  IsObject,
+  IsOptional,
+  IsString,
+} from 'class-validator';
 import { TransactionType } from '../../types/transaction-type.enum';
 
 export class CreateTransactionDto {
@@ -59,31 +64,16 @@ export class CreateTransactionDto {
   @IsString()
   transactionId?: string;
 
-  @ApiProperty({ example: 'user@paypal.com', required: false })
-  @IsOptional()
-  @IsString()
-  paypalEmail?: string;
-
-  @ApiProperty({ example: 'user@zelle.com', required: false })
-  @IsOptional()
-  @IsString()
-  zelleEmail?: string;
-
   @ApiProperty({
-    example: '1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa',
+    example: {
+      bankAccountNumber: '1234567890',
+      bankName: 'Bank of America',
+      recipientName: 'John Doe',
+    },
     required: false,
+    description: 'Данные для выбранного метода оплаты (гибкая структура)',
   })
   @IsOptional()
-  @IsString()
-  walletBTCAddress?: string;
-
-  @ApiProperty({ example: '1234567890', required: false })
-  @IsOptional()
-  @IsString()
-  bankAccountNumber?: string;
-
-  @ApiProperty({ example: 'Bank of America', required: false })
-  @IsOptional()
-  @IsString()
-  bankName?: string;
+  @IsObject()
+  paymentDetails?: Record<string, any>;
 }
