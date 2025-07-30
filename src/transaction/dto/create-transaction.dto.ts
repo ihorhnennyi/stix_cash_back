@@ -1,66 +1,61 @@
+// src/transactions/dto/create-transaction.dto.ts
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
-import { UserDto } from '../../user/dto/user.dto';
+import { IsDateString, IsEnum, IsOptional, IsString } from 'class-validator';
+import { TransactionType } from '../../types/transaction-type.enum';
 
 export class CreateTransactionDto {
-  @Expose()
-  @ApiProperty()
-  _id: string;
+  @ApiProperty({ example: 'deposit', enum: TransactionType })
+  @IsEnum(TransactionType)
+  type: TransactionType;
 
-  @Expose()
-  @ApiProperty()
-  type: 'deposit' | 'withdrawal';
-
-  @Expose()
-  @ApiProperty()
+  @ApiProperty({ example: '100.5' })
+  @IsString()
   amount: string;
 
-  @Expose()
-  @ApiProperty()
-  balance: string;
-
-  @Expose()
-  @ApiProperty()
+  @ApiProperty({ example: 'USD', enum: ['USD', 'BTC'] })
+  @IsEnum(['USD', 'BTC'])
   currency: 'USD' | 'BTC';
 
-  @Expose()
-  @ApiProperty()
-  status: 'pending' | 'completed' | 'failed' | 'canceled';
+  @ApiProperty({
+    example: 'walletBTCAddress',
+    enum: [
+      'walletBTCAddress',
+      'wireTransfer',
+      'zelleTransfer',
+      'paypalAddress',
+    ],
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum([
+    'walletBTCAddress',
+    'wireTransfer',
+    'zelleTransfer',
+    'paypalAddress',
+  ])
+  method?: string;
 
-  @Expose()
-  @ApiProperty()
-  createdByAdmin: boolean;
-
-  @Expose()
-  @ApiProperty({ required: false })
-  method?:
-    | 'walletBTCAddress'
-    | 'wireTransfer'
-    | 'zelleTransfer'
-    | 'paypalAddress';
-
-  @Expose()
-  @ApiProperty({ required: false })
+  @ApiProperty({ example: 'Комментарий', required: false })
+  @IsOptional()
+  @IsString()
   note?: string;
 
-  @Expose()
-  @ApiProperty({ required: false })
+  @ApiProperty({ example: '2025-07-30T10:00:00.000Z', required: false })
+  @IsOptional()
+  @IsDateString()
   date?: Date;
 
-  @Expose()
-  @ApiProperty({ required: false })
+  @ApiProperty({
+    example: 'pending',
+    enum: ['pending', 'completed', 'failed', 'canceled'],
+    required: false,
+  })
+  @IsOptional()
+  @IsEnum(['pending', 'completed', 'failed', 'canceled'])
+  status?: 'pending' | 'completed' | 'failed' | 'canceled';
+
+  @ApiProperty({ example: 'abc123', required: false })
+  @IsOptional()
+  @IsString()
   transactionId?: string;
-
-  @Expose()
-  @ApiProperty()
-  createdAt: Date;
-
-  @Expose()
-  @ApiProperty()
-  updatedAt: Date;
-
-  @Expose()
-  @Type(() => UserDto)
-  @ApiProperty({ type: () => UserDto })
-  user: UserDto;
 }
