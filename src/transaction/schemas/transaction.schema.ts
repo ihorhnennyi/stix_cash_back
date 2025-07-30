@@ -12,10 +12,10 @@ export class Transaction {
   @Prop({ enum: ['deposit', 'withdrawal'], required: true })
   type: 'deposit' | 'withdrawal';
 
-  @Prop({ type: String, required: true }) // 🔄 теперь строка
+  @Prop({ type: String, required: true })
   amount: string;
 
-  @Prop({ type: String, required: false }) // 🔄 теперь строка
+  @Prop({ type: String, required: false })
   balance?: string;
 
   @Prop({ enum: ['USD', 'BTC'], required: true })

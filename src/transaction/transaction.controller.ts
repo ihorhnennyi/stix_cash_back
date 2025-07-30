@@ -20,14 +20,16 @@ import { Roles } from '../common/decorators/roles.decorator';
 import { CurrentUser } from '../common/decorators/user.decorator';
 import { RolesGuard } from '../common/guards/roles.guard';
 
-import { JwtPayload } from '../common/types/jwt-payload.interface';
-import { Role } from '../types/role.enum';
-
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { FilterTransactionsDto } from './dto/filter-transactions.dto';
+import { TransactionDto } from './dto/transaction.dto';
 import { UpdateTransactionStatusDto } from './dto/update-transaction-status.dto';
 import { UpdateTransactionDto } from './dto/update-transaction.dto';
 import { TransactionService } from './transaction.service';
+
+import { plainToInstance } from 'class-transformer';
+import { JwtPayload } from '../common/types/jwt-payload.interface';
+import { Role } from '../types/role.enum';
 
 @ApiTags('Транзакции')
 @ApiBearerAuth()
@@ -36,77 +38,104 @@ import { TransactionService } from './transaction.service';
 export class TransactionController {
   constructor(private readonly transactionService: TransactionService) {}
 
-  @ApiOperation({ summary: 'Создать транзакцию (пользователь)' })
-  @ApiResponse({ status: 201, description: 'Транзакция создана' })
   @Post()
+  @ApiOperation({ summary: 'Создать транзакцию (пользователь)' })
+  @ApiResponse({ status: 201, type: TransactionDto })
   async createUserTransaction(
     @Body() dto: CreateTransactionDto,
     @CurrentUser() user: JwtPayload,
   ) {
-    return this.transactionService.create(user.sub, dto, false);
+    const transaction = await this.transactionService.create(
+      user.sub,
+      dto,
+      false,
+    );
+    return plainToInstance(TransactionDto, transaction, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  @ApiOperation({ summary: 'Создать транзакцию (админ)' })
-  @ApiResponse({ status: 201, description: 'Транзакция создана админом' })
+  @Post('admin/:userId')
   @Roles(Role.Admin)
   @UseGuards(RolesGuard)
-  @Post('admin/:userId')
+  @ApiOperation({ summary: 'Создать транзакцию (админ)' })
+  @ApiResponse({ status: 201, type: TransactionDto })
   async createAdminTransaction(
     @Param('userId') userId: string,
     @Body() dto: CreateTransactionDto,
   ) {
-    return this.transactionService.create(userId, dto, true);
+    const transaction = await this.transactionService.create(userId, dto, true);
+    return plainToInstance(TransactionDto, transaction, {
+      excludeExtraneousValues: true,
+    });
   }
 
   @Patch(':id')
   @Roles(Role.Admin)
   @UseGuards(RolesGuard)
   @ApiOperation({ summary: 'Редактировать транзакцию (админ)' })
-  @ApiResponse({ status: 200, description: 'Транзакция обновлена' })
-  @ApiResponse({ status: 404, description: 'Транзакция не найдена' })
+  @ApiResponse({ status: 200, type: TransactionDto })
   async updateTransaction(
     @Param('id') id: string,
     @Body() dto: UpdateTransactionDto,
   ) {
-    return this.transactionService.updateByAdmin(id, dto);
+    const transaction = await this.transactionService.updateByAdmin(id, dto);
+    return plainToInstance(TransactionDto, transaction, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  @ApiOperation({ summary: 'Обновить статус транзакции (админ)' })
-  @ApiResponse({ status: 200, description: 'Статус обновлён' })
-  @ApiResponse({ status: 404, description: 'Транзакция не найдена' })
+  @Patch(':id/status')
   @Roles(Role.Admin)
   @UseGuards(RolesGuard)
-  @Patch(':id/status')
-  async updateStatus(
+  @ApiOperation({ summary: 'Обновить статус транзакции (админ)' })
+  @ApiResponse({ status: 200, type: TransactionDto })
+  async updateTransactionStatus(
     @Param('id') id: string,
     @Body() dto: UpdateTransactionStatusDto,
   ) {
-    return this.transactionService.updateStatus(id, dto);
+    const transaction = await this.transactionService.updateStatus(id, dto);
+    return plainToInstance(TransactionDto, transaction, {
+      excludeExtraneousValues: true,
+    });
   }
 
-  @ApiOperation({ summary: 'Получить все транзакции с фильтрами (админ)' })
-  @ApiResponse({ status: 200, description: 'Список транзакций' })
-  @Roles(Role.Admin)
-  @UseGuards(RolesGuard)
   @Get()
-  async getAllTransactions(@Query() filters: FilterTransactionsDto) {
-    return this.transactionService.findAllWithFilters(filters);
-  }
-
-  @ApiOperation({ summary: 'Получить свои транзакции (пользователь)' })
-  @ApiResponse({ status: 200, description: 'Список моих транзакций' })
-  @Get('my')
-  async getMyTransactions(@CurrentUser() user: JwtPayload) {
-    return this.transactionService.findByUser(user.sub);
-  }
-
-  @ApiOperation({ summary: 'Получить транзакцию по ID (админ)' })
-  @ApiResponse({ status: 200, description: 'Одна транзакция' })
-  @ApiResponse({ status: 404, description: 'Транзакция не найдена' })
   @Roles(Role.Admin)
   @UseGuards(RolesGuard)
+  @ApiOperation({ summary: 'Получить все транзакции с фильтрами (админ)' })
+  @ApiResponse({ status: 200, type: [TransactionDto] })
+  async getAllTransactions(
+    @Query() filters: FilterTransactionsDto,
+  ): Promise<TransactionDto[]> {
+    const transactions =
+      await this.transactionService.findAllWithFilters(filters);
+    return plainToInstance(TransactionDto, transactions, {
+      excludeExtraneousValues: true,
+    });
+  }
+
+  @Get('my')
+  @ApiOperation({ summary: 'Получить свои транзакции (пользователь)' })
+  @ApiResponse({ status: 200, type: [TransactionDto] })
+  async getMyTransactions(
+    @CurrentUser() user: JwtPayload,
+  ): Promise<TransactionDto[]> {
+    const transactions = await this.transactionService.findByUser(user.sub);
+    return plainToInstance(TransactionDto, transactions, {
+      excludeExtraneousValues: true,
+    });
+  }
+
   @Get(':id')
-  async getTransactionById(@Param('id') id: string) {
-    return this.transactionService.findById(id);
+  @Roles(Role.Admin)
+  @UseGuards(RolesGuard)
+  @ApiOperation({ summary: 'Получить транзакцию по ID (админ)' })
+  @ApiResponse({ status: 200, type: TransactionDto })
+  async getTransactionById(@Param('id') id: string): Promise<TransactionDto> {
+    const transaction = await this.transactionService.findById(id);
+    return plainToInstance(TransactionDto, transaction, {
+      excludeExtraneousValues: true,
+    });
   }
 }

@@ -1,7 +1,12 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
+import Big from 'big.js';
 import { Model, Types } from 'mongoose';
-
+import { TransactionType } from 'src/types/transaction-type.enum';
 import { CreateTransactionDto } from './dto/create-transaction.dto';
 import { FilterTransactionsDto } from './dto/filter-transactions.dto';
 import { UpdateTransactionStatusDto } from './dto/update-transaction-status.dto';
@@ -21,7 +26,7 @@ export class TransactionService {
     createdByAdmin = false,
   ) {
     if (!Types.ObjectId.isValid(userId)) {
-      throw new Error('Invalid userId');
+      throw new BadRequestException('Invalid userId');
     }
 
     const user = await this.transactionModel.db
@@ -32,11 +37,34 @@ export class TransactionService {
       throw new NotFoundException('Пользователь не найден');
     }
 
+    const amount = new Big(dto.amount || '0');
+    if (amount.lte(0)) {
+      throw new BadRequestException('Amount must be greater than zero');
+    }
+
+    const currentBalance =
+      dto.currency === 'BTC'
+        ? new Big(user.balanceBTC || '0')
+        : new Big(user.balance || '0');
+
+    let updatedBalance: Big;
+
+    if (dto.type === TransactionType.Deposit) {
+      updatedBalance = currentBalance.plus(amount);
+    } else if (dto.type === TransactionType.Withdrawal) {
+      if (currentBalance.lt(amount)) {
+        throw new BadRequestException('Недостаточно средств для вывода');
+      }
+      updatedBalance = currentBalance.minus(amount);
+    } else {
+      throw new BadRequestException('Неверный тип транзакции');
+    }
+
     const transaction = new this.transactionModel({
       user: new Types.ObjectId(userId),
       type: dto.type,
       amount: dto.amount,
-      balance: dto.balance,
+      balance: updatedBalance.toString(),
       currency: dto.currency,
       method: dto.method,
       note: dto.note,
@@ -46,9 +74,18 @@ export class TransactionService {
       createdByAdmin,
     });
 
-    const saved = await transaction.save();
+    await transaction.save();
 
-    return this.transactionModel.findById(saved._id).populate('user');
+    // Обновляем баланс пользователя
+    const balanceField = dto.currency === 'BTC' ? 'balanceBTC' : 'balance';
+    await this.transactionModel.db
+      .collection('users')
+      .updateOne(
+        { _id: new Types.ObjectId(userId) },
+        { $set: { [balanceField]: updatedBalance.toString() } },
+      );
+
+    return this.transactionModel.findById(transaction._id).populate('user');
   }
 
   async updateStatus(id: string, dto: UpdateTransactionStatusDto) {
@@ -63,22 +100,7 @@ export class TransactionService {
     const transaction = await this.transactionModel.findById(id);
     if (!transaction) throw new NotFoundException('Транзакция не найдена');
 
-    if (dto.type) transaction.type = dto.type;
-    if (dto.amount) transaction.amount = dto.amount;
-    if (dto.balance) transaction.balance = dto.balance;
-    if (dto.currency) transaction.currency = dto.currency;
-    if (dto.method)
-      transaction.method = dto.method as
-        | 'walletBTCAddress'
-        | 'wireTransfer'
-        | 'zelleTransfer'
-        | 'paypalAddress';
-
-    if (dto.note) transaction.note = dto.note;
-    if (dto.date) transaction.date = dto.date;
-    if (dto.transactionId) transaction.transactionId = dto.transactionId;
-    if (dto.status) transaction.status = dto.status;
-
+    Object.assign(transaction, dto);
     return transaction.save();
   }
 
@@ -113,13 +135,8 @@ export class TransactionService {
     const { userId, from, to, status } = filters;
     const query: any = {};
 
-    if (userId) {
-      query.user = new Types.ObjectId(userId);
-    }
-
-    if (status) {
-      query.status = status;
-    }
+    if (userId) query.user = new Types.ObjectId(userId);
+    if (status) query.status = status;
 
     if (from || to) {
       query.createdAt = {};
