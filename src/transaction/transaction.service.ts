@@ -37,22 +37,28 @@ export class TransactionService {
       throw new NotFoundException('Пользователь не найден');
     }
 
-    const pendingExists = await this.transactionModel.exists({
+    // Проверка на существующую pending транзакцию
+    const existing = await this.transactionModel.findOne({
       user: new Types.ObjectId(userId),
       status: 'pending',
+      type: dto.type,
+      amount: dto.amount,
+      currency: dto.currency,
+      method: dto.method,
+      note: dto.note,
     });
 
-    if (pendingExists) {
-      throw new BadRequestException(
-        'Невозможно создать новую транзакцию: есть ожидающая (pending) транзакция',
-      );
+    if (existing) {
+      return this.transactionModel.findById(existing._id).populate('user');
     }
 
+    // Проверка суммы
     const amount = new Big(dto.amount || '0');
     if (amount.lte(0)) {
       throw new BadRequestException('Amount must be greater than zero');
     }
 
+    // Баланс
     const currentBalance =
       dto.currency === 'BTC'
         ? new Big(user.balanceBTC || '0')
@@ -71,6 +77,7 @@ export class TransactionService {
       throw new BadRequestException('Неверный тип транзакции');
     }
 
+    // Создание новой транзакции
     const {
       type,
       amount: dtoAmount,

@@ -110,9 +110,11 @@ export class TransactionController {
   ): Promise<TransactionDto[]> {
     const transactions =
       await this.transactionService.findAllWithFilters(filters);
-    return plainToInstance(TransactionDto, transactions, {
-      excludeExtraneousValues: true,
-    });
+    return transactions.map((t) =>
+      plainToInstance(TransactionDto, t.toObject(), {
+        excludeExtraneousValues: true,
+      }),
+    );
   }
 
   @Get('my')
@@ -134,7 +136,8 @@ export class TransactionController {
   @ApiResponse({ status: 200, type: TransactionDto })
   async getTransactionById(@Param('id') id: string): Promise<TransactionDto> {
     const transaction = await this.transactionService.findById(id);
-    return plainToInstance(TransactionDto, transaction, {
+
+    return plainToInstance(TransactionDto, transaction.toObject(), {
       excludeExtraneousValues: true,
     });
   }

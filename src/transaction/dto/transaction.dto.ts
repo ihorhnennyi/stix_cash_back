@@ -1,11 +1,11 @@
 import { ApiProperty } from '@nestjs/swagger';
-import { Expose, Type } from 'class-transformer';
+import { Expose, Transform, Type } from 'class-transformer';
 import { UserDto } from '../../user/dto/user.dto';
 
 export class TransactionDto {
   @Expose()
-  @ApiProperty()
-  _id: string;
+  @Transform(({ obj }) => obj._id.toString())
+  id: string;
 
   @Expose()
   @ApiProperty()
