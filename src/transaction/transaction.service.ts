@@ -29,15 +29,8 @@ export class TransactionService {
       throw new BadRequestException('Invalid userId');
     }
 
-    const user = await this.transactionModel.db
-      .collection('users')
-      .findOne({ _id: new Types.ObjectId(userId) });
+    const user = await this.getUserById(userId);
 
-    if (!user) {
-      throw new NotFoundException('Пользователь не найден');
-    }
-
-    // Проверка на существующую pending транзакцию
     const existing = await this.transactionModel.findOne({
       user: new Types.ObjectId(userId),
       status: 'pending',
@@ -52,32 +45,16 @@ export class TransactionService {
       return this.transactionModel.findById(existing._id).populate('user');
     }
 
-    // Проверка суммы
     const amount = new Big(dto.amount || '0');
-    if (amount.lte(0)) {
-      throw new BadRequestException('Amount must be greater than zero');
-    }
+    this.validateAmount(amount);
 
-    // Баланс
-    const currentBalance =
-      dto.currency === 'BTC'
-        ? new Big(user.balanceBTC || '0')
-        : new Big(user.balance || '0');
+    const currentBalance = this.getCurrentBalance(user, dto.currency);
+    const updatedBalance = this.calculateUpdatedBalance(
+      currentBalance,
+      amount,
+      dto.type,
+    );
 
-    let updatedBalance: Big;
-
-    if (dto.type === TransactionType.Deposit) {
-      updatedBalance = currentBalance.plus(amount);
-    } else if (dto.type === TransactionType.Withdrawal) {
-      if (currentBalance.lt(amount)) {
-        throw new BadRequestException('Недостаточно средств для вывода');
-      }
-      updatedBalance = currentBalance.minus(amount);
-    } else {
-      throw new BadRequestException('Неверный тип транзакции');
-    }
-
-    // Создание новой транзакции
     const {
       type,
       amount: dtoAmount,
@@ -107,22 +84,48 @@ export class TransactionService {
 
     await transaction.save();
 
-    const balanceField = currency === 'BTC' ? 'balanceBTC' : 'balance';
-    await this.transactionModel.db
-      .collection('users')
-      .updateOne(
-        { _id: new Types.ObjectId(userId) },
-        { $set: { [balanceField]: updatedBalance.toString() } },
-      );
+    const isCompletedByAdmin =
+      createdByAdmin && transaction.status === 'completed';
+
+    if (isCompletedByAdmin) {
+      await this.updateUserBalance(userId, currency, updatedBalance.toString());
+    }
 
     return this.transactionModel.findById(transaction._id).populate('user');
   }
 
   async updateStatus(id: string, dto: UpdateTransactionStatusDto) {
     const transaction = await this.transactionModel.findById(id);
-    if (!transaction) throw new NotFoundException('Транзакция не найдена');
+    if (!transaction) {
+      throw new NotFoundException('Транзакция не найдена');
+    }
 
+    const prevStatus = transaction.status;
     transaction.status = dto.status;
+
+    if (prevStatus !== 'completed' && dto.status === 'completed') {
+      const user = await this.getUserById(transaction.user.toString());
+
+      const amount = new Big(transaction.amount || '0');
+      this.validateAmount(amount);
+
+      const currentBalance = this.getCurrentBalance(user, transaction.currency);
+
+      const updatedBalance = this.calculateUpdatedBalance(
+        currentBalance,
+        amount,
+        transaction.type as TransactionType,
+      );
+
+      await this.updateUserBalance(
+        transaction.user.toString(),
+        transaction.currency,
+        updatedBalance.toString(),
+      );
+
+      transaction.balance = updatedBalance.toString();
+    }
+
     return transaction.save();
   }
 
@@ -178,5 +181,64 @@ export class TransactionService {
       .find(query)
       .populate('user')
       .sort({ createdAt: -1 });
+  }
+
+  // ────────────────────────────────────────────────
+  // 🔒 Приватные вспомогательные методы
+  // ────────────────────────────────────────────────
+
+  private validateAmount(amount: Big) {
+    if (amount.lte(0)) {
+      throw new BadRequestException('Amount must be greater than zero');
+    }
+  }
+
+  private getCurrentBalance(user: any, currency: string): Big {
+    return currency === 'BTC'
+      ? new Big(user.balanceBTC || '0')
+      : new Big(user.balance || '0');
+  }
+
+  private calculateUpdatedBalance(
+    currentBalance: Big,
+    amount: Big,
+    type: TransactionType,
+  ): Big {
+    if (type === TransactionType.Deposit) {
+      return currentBalance.plus(amount);
+    }
+    if (type === TransactionType.Withdrawal) {
+      if (currentBalance.lt(amount)) {
+        throw new BadRequestException('Недостаточно средств для вывода');
+      }
+      return currentBalance.minus(amount);
+    }
+    throw new BadRequestException('Неверный тип транзакции');
+  }
+
+  private async updateUserBalance(
+    userId: string,
+    currency: string,
+    updatedBalance: string,
+  ) {
+    const balanceField = currency === 'BTC' ? 'balanceBTC' : 'balance';
+    await this.transactionModel.db
+      .collection('users')
+      .updateOne(
+        { _id: new Types.ObjectId(userId) },
+        { $set: { [balanceField]: updatedBalance } },
+      );
+  }
+
+  private async getUserById(userId: string) {
+    const user = await this.transactionModel.db
+      .collection('users')
+      .findOne({ _id: new Types.ObjectId(userId) });
+
+    if (!user) {
+      throw new NotFoundException('Пользователь не найден');
+    }
+
+    return user;
   }
 }
