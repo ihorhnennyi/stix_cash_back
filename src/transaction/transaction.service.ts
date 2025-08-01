@@ -34,15 +34,12 @@ export class TransactionService {
     const existing = await this.transactionModel.findOne({
       user: new Types.ObjectId(userId),
       status: 'pending',
-      type: dto.type,
-      amount: dto.amount,
-      currency: dto.currency,
-      method: dto.method,
-      note: dto.note,
     });
 
     if (existing) {
-      return this.transactionModel.findById(existing._id).populate('user');
+      throw new BadRequestException(
+        'У вас уже есть неподтверждённая транзакция. Дождитесь её обработки.',
+      );
     }
 
     const amount = new Big(dto.amount || '0');
@@ -91,7 +88,7 @@ export class TransactionService {
       await this.updateUserBalance(userId, currency, updatedBalance.toString());
     }
 
-    return this.transactionModel.findById(transaction._id).populate('user');
+    return transaction.populate('user');
   }
 
   async updateStatus(id: string, dto: UpdateTransactionStatusDto) {
