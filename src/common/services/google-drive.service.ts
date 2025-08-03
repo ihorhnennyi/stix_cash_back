@@ -2,15 +2,21 @@ import { Injectable, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { drive_v3, google } from 'googleapis';
 import { Readable } from 'stream';
+import { GoogleTokenService } from './google-token.service';
 
 @Injectable()
 export class GoogleDriveService implements OnModuleInit {
   private drive: drive_v3.Drive;
   private folderId: string;
 
-  constructor(private readonly configService: ConfigService) {}
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly tokenService: GoogleTokenService,
+  ) {}
 
-  onModuleInit() {
+  async onModuleInit() {
+    const token = await this.tokenService.getToken();
+
     const oAuth2Client = new google.auth.OAuth2(
       this.configService.get('GOOGLE_CLIENT_ID'),
       this.configService.get('GOOGLE_CLIENT_SECRET'),
@@ -18,13 +24,24 @@ export class GoogleDriveService implements OnModuleInit {
     );
 
     oAuth2Client.setCredentials({
-      refresh_token: this.configService.get('GOOGLE_REFRESH_TOKEN'),
+      access_token: token.access_token,
+      refresh_token: token.refresh_token,
+      expiry_date: token.expiry_date,
     });
 
-    this.drive = google.drive({
-      version: 'v3',
-      auth: oAuth2Client,
-    });
+    if (!token.access_token || token.expiry_date < Date.now()) {
+      const { credentials } = await oAuth2Client.refreshAccessToken();
+
+      await this.tokenService.updateToken({
+        access_token: credentials.access_token!,
+        expiry_date: credentials.expiry_date!,
+        refresh_token: credentials.refresh_token ?? token.refresh_token,
+      });
+
+      oAuth2Client.setCredentials(credentials);
+    }
+
+    this.drive = google.drive({ version: 'v3', auth: oAuth2Client });
 
     const folderId = this.configService.get<string>(
       'GOOGLE_DRIVE_PARENT_FOLDER_ID',
