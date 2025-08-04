@@ -22,6 +22,13 @@ export class GoogleTokenService {
   }
 
   async updateToken(data: Partial<GoogleToken>): Promise<void> {
-    await this.tokenModel.updateOne({}, { $set: data });
+    const token = await this.tokenModel.findOne();
+
+    if (token) {
+      Object.assign(token, data);
+      await token.save();
+    } else {
+      await this.tokenModel.create(data);
+    }
   }
 }
