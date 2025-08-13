@@ -1,19 +1,24 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
 import { Document, Types } from 'mongoose';
 
+export type UserFileDocument = UserFile & Document;
+
 @Schema({ timestamps: true })
-export class UserDocument extends Document {
-  @Prop({ type: Types.ObjectId, ref: 'User', required: true })
+export class UserFile {
+  @Prop({ type: Types.ObjectId, ref: 'User', required: true, index: true })
   user: Types.ObjectId;
 
   @Prop({ required: true })
   name: string;
 
   @Prop({ required: true })
-  fileId: string;
+  relPath: string;
 
   @Prop({ required: true })
-  webViewLink: string;
+  mime: string;
+
+  @Prop({ required: true })
+  size: number;
 }
 
-export const UserDocumentSchema = SchemaFactory.createForClass(UserDocument);
+export const UserFileSchema = SchemaFactory.createForClass(UserFile);

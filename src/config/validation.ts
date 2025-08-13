@@ -7,6 +7,10 @@ export const validationSchema = Joi.object({
     'any.required': '"MONGODB_URI" обязателен!',
   }),
 
+  USER_FILES_ROOT: Joi.string().required().messages({
+    'any.required': '"USER_FILES_ROOT" обязателен!',
+  }),
+
   JWT_SECRET: Joi.string().required().messages({
     'any.required': '"JWT_SECRET" обязателен!',
   }),
@@ -15,16 +19,6 @@ export const validationSchema = Joi.object({
 
   ROOT_ADMIN_EMAIL: Joi.string().email().required(),
   ROOT_ADMIN_PASSWORD: Joi.string().min(6).required(),
-
-  // 🧠 Только OAuth 2.0 Client
-  GOOGLE_CLIENT_ID: Joi.string().required(),
-  GOOGLE_CLIENT_SECRET: Joi.string().required(),
-  GOOGLE_REDIRECT_URI: Joi.string().uri().required(),
-  GOOGLE_REFRESH_TOKEN: Joi.string().required(),
-
-  // 🎯 Папка и владелец
-  GOOGLE_DRIVE_PARENT_FOLDER_ID: Joi.string().required(),
-  GOOGLE_DRIVE_OWNER: Joi.string().email().required(),
 
   FRONTEND_URL: Joi.string().uri().default('http://localhost:5173'),
 });

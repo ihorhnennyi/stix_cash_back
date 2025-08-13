@@ -76,7 +76,7 @@ export class UserController {
   }
 
   @Post('documents')
-  @UseInterceptors(FilesInterceptor('files')) // поле "files" вместо "file"
+  @UseInterceptors(FilesInterceptor('files')) // поле form-data: "files"
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
@@ -84,31 +84,32 @@ export class UserController {
       properties: {
         files: {
           type: 'array',
-          items: {
-            type: 'string',
-            format: 'binary',
-          },
+          items: { type: 'string', format: 'binary' },
         },
       },
     },
   })
-  @ApiOperation({ summary: 'Загрузить несколько документов в Google Drive' })
+  @ApiOperation({
+    summary: 'Загрузить несколько документов в локальное хранилище',
+  })
   @ApiResponse({
     status: 201,
-    description: 'Файлы успешно загружены',
+    description: 'Файлы успешно загружены в локальную папку пользователя',
     schema: {
       example: {
         message: 'Файлы успешно загружены',
         files: [
           {
-            fileId: '1a2b3c4d5e',
-            webViewLink: 'https://drive.google.com/file/d/1a2b3c4d5e/view',
-            name: 'passport.pdf',
+            name: 'passport-2025-08-13T10-05-02-123Z.pdf',
+            relPath: '66b123abc/passport-2025-08-13T10-05-02-123Z.pdf',
+            mime: 'application/pdf',
+            size: 123456,
           },
           {
-            fileId: '6f7g8h9i0j',
-            webViewLink: 'https://drive.google.com/file/d/6f7g8h9i0j/view',
-            name: 'contract.pdf',
+            name: 'contract-2025-08-13T10-05-03-456Z.pdf',
+            relPath: '66b123abc/contract-2025-08-13T10-05-03-456Z.pdf',
+            mime: 'application/pdf',
+            size: 98765,
           },
         ],
       },
@@ -118,17 +119,21 @@ export class UserController {
     @UploadedFiles() files: Express.Multer.File[],
     @CurrentUser() user: JwtPayload,
   ) {
-    if (!files?.length) throw new BadRequestException('Файлы не были переданы');
+    if (!files?.length) {
+      throw new BadRequestException('Файлы не были переданы');
+    }
 
     const results = await Promise.all(
-      files.map((file) => {
-        const normalizedFile = {
-          originalname: file.originalname,
-          mimetype: file.mimetype,
-          buffer: file.buffer,
-        };
-        return this.userService.uploadFileToDrive(normalizedFile, user);
-      }),
+      files.map((file) =>
+        this.userService.uploadFile(
+          {
+            originalname: file.originalname,
+            mimetype: file.mimetype,
+            buffer: file.buffer,
+          },
+          user,
+        ),
+      ),
     );
 
     return {

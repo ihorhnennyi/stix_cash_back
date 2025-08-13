@@ -59,7 +59,6 @@ async function bootstrap() {
   console.log(`🚀 Stix Cash Backend is running on: http://localhost:${PORT}`);
   console.log(`📚 Swagger Docs: http://localhost:${PORT}/api/docs`);
 
-  // ✅ Автоматическое создание root-админа
   const adminService = app.get(AdminService);
   const rootEmail = configService.get<string>('ROOT_ADMIN_EMAIL');
   const rootPassword = configService.get<string>('ROOT_ADMIN_PASSWORD');

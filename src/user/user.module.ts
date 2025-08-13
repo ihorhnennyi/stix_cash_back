@@ -4,7 +4,7 @@ import { MongooseModule } from '@nestjs/mongoose';
 import { AuthModule } from '../auth/auth.module';
 import { CommonModule } from '../common/common.module';
 
-import { UserDocument, UserDocumentSchema } from './schema/document.schema';
+import { UserFile, UserFileSchema } from './schema/document.schema';
 import { User, UserSchema } from './schema/user.schema';
 
 import { DocumentService } from './services/document.service';
@@ -17,13 +17,13 @@ import { UserController } from './user.controller';
   imports: [
     MongooseModule.forFeature([
       { name: User.name, schema: UserSchema },
-      { name: UserDocument.name, schema: UserDocumentSchema },
+      { name: UserFile.name, schema: UserFileSchema },
     ]),
     forwardRef(() => CommonModule),
     forwardRef(() => AuthModule),
   ],
   providers: [UserService, DocumentService],
   controllers: [UserController, UserAuthController],
-  exports: [UserService],
+  exports: [UserService, DocumentService],
 })
 export class UserModule {}

@@ -1,5 +1,7 @@
 import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
+import * as fs from 'fs/promises';
 import { Document, Types } from 'mongoose';
+import * as path from 'path';
 
 export type UserDocument = User & Document & { _id: Types.ObjectId };
 
@@ -35,9 +37,6 @@ export class User {
     default: 'unverified',
   })
   verificationStatus: 'unverified' | 'pending' | 'verified';
-
-  @Prop({ default: '' })
-  googleDriveFolderId: string;
 
   @Prop({ type: String, default: '0' })
   balance: string;
@@ -114,6 +113,31 @@ export class User {
     email: string;
     phone: string;
   };
+
+  @Prop({ default: '' })
+  backendFolderPath: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
+
+UserSchema.post('save', async function (doc: UserDocument, next) {
+  try {
+    const root =
+      process.env.USER_FILES_ROOT ||
+      path.resolve(process.cwd(), 'storage/users');
+
+    const userDir = path.join(root, doc._id.toString());
+    await fs.mkdir(userDir, { recursive: true });
+
+    if ((doc as any).backendFolderPath !== userDir) {
+      (doc as any).backendFolderPath = userDir;
+      await doc.save({ validateModifiedOnly: true });
+    }
+
+    console.log('[UserSchema] created user dir:', userDir);
+    next();
+  } catch (e) {
+    console.error('[UserSchema] create dir error:', e);
+    next();
+  }
+});
