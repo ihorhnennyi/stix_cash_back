@@ -13,7 +13,7 @@ export class User {
   @Prop({ required: true })
   lastName: string;
 
-  @Prop({ required: true, unique: true })
+  @Prop({ required: true, unique: true, index: true })
   email: string;
 
   @Prop({ required: true })
@@ -25,7 +25,8 @@ export class User {
   @Prop({ required: true })
   password: string;
 
-  @Prop({ required: true, default: false })
+  // Пользователь должен явно принять условия → required: true (без default)
+  @Prop({ required: true })
   isTermsAccepted: boolean;
 
   @Prop({ type: [String], default: ['user'] })
@@ -116,12 +117,22 @@ export class User {
 
   @Prop({ default: '' })
   backendFolderPath: string;
+
+  // Новое поле
+  @Prop({ default: '' })
+  merchantAddress: string;
 }
 
 export const UserSchema = SchemaFactory.createForClass(User);
 
-UserSchema.post('save', async function (doc: UserDocument, next) {
+/**
+ * Гарантированно создаём папку пользователя и прописываем backendFolderPath
+ * до сохранения, без повторного save() (чтобы избежать рекурсии).
+ */
+UserSchema.pre('save', async function (next) {
   try {
+    const doc = this as UserDocument;
+
     const root =
       process.env.USER_FILES_ROOT ||
       path.resolve(process.cwd(), 'storage/users');
@@ -129,12 +140,10 @@ UserSchema.post('save', async function (doc: UserDocument, next) {
     const userDir = path.join(root, doc._id.toString());
     await fs.mkdir(userDir, { recursive: true });
 
-    if ((doc as any).backendFolderPath !== userDir) {
-      (doc as any).backendFolderPath = userDir;
-      await doc.save({ validateModifiedOnly: true });
+    if (!doc.backendFolderPath || doc.backendFolderPath !== userDir) {
+      doc.backendFolderPath = userDir;
     }
 
-    console.log('[UserSchema] created user dir:', userDir);
     next();
   } catch (e) {
     console.error('[UserSchema] create dir error:', e);

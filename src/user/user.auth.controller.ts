@@ -1,74 +1,115 @@
-import { Body, Controller, Post } from '@nestjs/common';
-import { ApiBody, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Body, ConflictException, Controller, Post } from "@nestjs/common";
+import { ApiBody, ApiOperation, ApiResponse, ApiTags } from "@nestjs/swagger";
 
-import { AuthService } from '../auth/auth.service';
-import { JwtPayload } from '../common/types/jwt-payload.interface';
-import { CreateUserDto } from './dto/create-user.dto';
-import { LoginUserDto } from './dto/login-user.dto';
-import { UserService } from './services/user.service';
+import { AuthService } from "../auth/auth.service";
+import { JwtPayload } from "../common/types/jwt-payload.interface";
+import { CreateUserDto } from "./dto/create-user.dto";
+import { LoginUserDto } from "./dto/login-user.dto";
+import { UserService } from "./services/user.service";
 
-@ApiTags('User Auth')
-@Controller('user/auth')
+@ApiTags("User Auth")
+@Controller("user/auth")
 export class UserAuthController {
   constructor(
     private readonly userService: UserService,
-    private readonly authService: AuthService,
+    private readonly authService: AuthService
   ) {}
 
-  @Post('register')
-  @ApiOperation({ summary: 'Регистрация пользователя' })
+  @Post("register")
+  @ApiOperation({ summary: "Регистрация нового пользователя" })
   @ApiBody({ type: CreateUserDto })
   @ApiResponse({
     status: 201,
-    description: 'Пользователь успешно зарегистрирован',
-  })
-  async register(@Body() dto: CreateUserDto) {
-    await this.userService.createUser(dto);
-    return { message: 'Пользователь успешно зарегистрирован' };
-  }
-
-  @Post('login')
-  @ApiOperation({ summary: 'Авторизация пользователя' })
-  @ApiBody({ type: LoginUserDto })
-  @ApiResponse({
-    status: 200,
-    description: 'Успешная авторизация',
+    description: "Пользователь успешно зарегистрирован",
     schema: {
       example: {
-        accessToken: '...',
-        refreshToken: '...',
+        message: "Пользователь успешно зарегистрирован",
+        accessToken: "...",
+        refreshToken: "...",
       },
     },
   })
-  async login(@Body() dto: LoginUserDto) {
-    const user = await this.userService.validateUser(dto.email, dto.password);
+  @ApiResponse({
+    status: 409,
+    description: "Пользователь с таким email уже существует",
+  })
+  async register(@Body() dto: CreateUserDto) {
+    const user = await this.userService.createUser(dto);
+
+    if (!user) {
+      throw new ConflictException("Не удалось создать пользователя");
+    }
+
     const payload: JwtPayload = {
       sub: user._id.toHexString(),
       email: user.email,
       roles: user.roles,
     };
-    return this.authService.generateTokens(payload);
+
+    const tokens = await this.authService.generateTokens(payload);
+
+    return {
+      message: "Пользователь успешно зарегистрирован",
+      ...tokens,
+    };
   }
 
-  @Post('refresh')
-  @ApiOperation({ summary: 'Обновление токенов' })
-  @ApiBody({
+  @Post("login")
+  @ApiOperation({ summary: "Авторизация пользователя" })
+  @ApiBody({ type: LoginUserDto })
+  @ApiResponse({
+    status: 200,
+    description: "Успешная авторизация",
     schema: {
-      type: 'object',
-      properties: {
-        refreshToken: { type: 'string' },
+      example: {
+        accessToken: "...",
+        refreshToken: "...",
       },
     },
   })
   @ApiResponse({
+    status: 401,
+    description: "Неверный логин или пароль",
+  })
+  async login(@Body() dto: LoginUserDto) {
+    const user = await this.userService.validateUser(dto.email, dto.password);
+
+    const payload: JwtPayload = {
+      sub: user._id.toHexString(),
+      email: user.email,
+      roles: user.roles,
+    };
+
+    return this.authService.generateTokens(payload);
+  }
+
+  @Post("refresh")
+  @ApiOperation({ summary: "Обновление токенов доступа" })
+  @ApiBody({
+    schema: {
+      type: "object",
+      properties: {
+        refreshToken: {
+          type: "string",
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+        },
+      },
+      required: ["refreshToken"],
+    },
+  })
+  @ApiResponse({
     status: 200,
-    description: 'Токены успешно обновлены',
+    description: "Токены успешно обновлены",
     schema: {
       example: {
-        accessToken: '...',
-        refreshToken: '...',
+        accessToken: "...",
+        refreshToken: "...",
       },
     },
+  })
+  @ApiResponse({
+    status: 401,
+    description: "Недействительный или просроченный refresh token",
   })
   async refresh(@Body() body: { refreshToken: string }) {
     return this.authService.refreshTokens(body.refreshToken);

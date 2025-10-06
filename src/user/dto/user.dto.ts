@@ -1,4 +1,4 @@
-import { ApiProperty } from '@nestjs/swagger';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Exclude, Expose, Transform } from 'class-transformer';
 import { WireTransferDto, ZelleTransferDto } from './transfer-info.dto';
 
@@ -32,12 +32,13 @@ export class UserDto {
   @ApiProperty({ example: ['user', 'admin'] })
   roles: string[];
 
+  // Опционально, т.к. нет в схеме User
   @Expose()
-  @ApiProperty({
+  @ApiPropertyOptional({
     example: '1A2B3C4D5GoogleDriveFolderID',
     description: "User's folder ID in Google Drive",
   })
-  googleDriveFolderId: string;
+  googleDriveFolderId?: string;
 
   @Expose()
   @ApiProperty({
@@ -100,4 +101,12 @@ export class UserDto {
   @Expose()
   @ApiProperty({ type: () => ZelleTransferDto })
   zelleTransfer: ZelleTransferDto;
+
+  // Новое поле
+  @Expose()
+  @ApiPropertyOptional({
+    example: '123 Main St, Apt 4B, New York, NY',
+    description: 'Merchant address',
+  })
+  merchantAddress?: string;
 }

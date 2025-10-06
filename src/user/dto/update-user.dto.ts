@@ -1,34 +1,37 @@
-import { ApiPropertyOptional, PartialType } from '@nestjs/swagger';
-import { Type } from 'class-transformer';
+import { ApiPropertyOptional, PartialType } from "@nestjs/swagger";
+import { Type } from "class-transformer";
 import {
   IsBoolean,
-  IsEnum,
+  IsIn,
   IsOptional,
   IsString,
   ValidateNested,
-} from 'class-validator';
-import { CreateUserDto } from './create-user.dto';
-import { WireTransferDto, ZelleTransferDto } from './transfer-info.dto';
+} from "class-validator";
+import { CreateUserDto } from "./create-user.dto";
+import { WireTransferDto, ZelleTransferDto } from "./transfer-info.dto";
+
+const VERIFICATION_STATUSES = ["unverified", "pending", "verified"] as const;
+type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
   @ApiPropertyOptional({
-    example: '1A2b3CbtcAddressHere',
-    description: 'Bitcoin wallet address',
+    example: "1A2b3CbtcAddressHere",
+    description: "Bitcoin wallet address",
   })
   @IsOptional()
   @IsString()
   walletBTCAddress?: string;
 
   @ApiPropertyOptional({
-    example: 'paypal@example.com',
-    description: 'PayPal email address',
+    example: "paypal@example.com",
+    description: "PayPal email address",
   })
   @IsOptional()
   @IsString()
   paypalAddress?: string;
 
   @ApiPropertyOptional({
-    description: 'Wire transfer information',
+    description: "Wire transfer information",
     type: () => WireTransferDto,
   })
   @IsOptional()
@@ -37,7 +40,7 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   wireTransfer?: WireTransferDto;
 
   @ApiPropertyOptional({
-    description: 'Zelle transfer information',
+    description: "Zelle transfer information",
     type: () => ZelleTransferDto,
   })
   @IsOptional()
@@ -47,7 +50,7 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 
   @ApiPropertyOptional({
     example: false,
-    description: 'Show balance in BTC?',
+    description: "Show balance in BTC?",
   })
   @IsOptional()
   @IsBoolean()
@@ -62,8 +65,8 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
   balanceBTC?: string;
 
   @ApiPropertyOptional({
-    example: 'newAdminPassword123',
-    description: 'New user password',
+    example: "newAdminPassword123",
+    description: "New user password",
   })
   @IsOptional()
   @IsString()
@@ -71,18 +74,26 @@ export class UpdateUserDto extends PartialType(CreateUserDto) {
 
   @ApiPropertyOptional({
     example: true,
-    description: 'Разрешить пользователю выполнять транзакции',
+    description: "Разрешить пользователю выполнять транзакции",
   })
   @IsOptional()
   @IsBoolean()
   isTransactionAllowed?: boolean;
 
   @ApiPropertyOptional({
-    example: 'pending',
-    enum: ['unverified', 'pending', 'verified'],
-    description: 'User verification status',
+    example: "pending",
+    enum: VERIFICATION_STATUSES,
+    description: "User verification status",
   })
   @IsOptional()
-  @IsEnum(['unverified', 'pending', 'verified'])
-  verificationStatus?: 'unverified' | 'pending' | 'verified';
+  @IsIn(VERIFICATION_STATUSES)
+  verificationStatus?: VerificationStatus;
+
+  @ApiPropertyOptional({
+    example: "123 Main St, Apt 4B, New York, NY",
+    description: "Merchant address",
+  })
+  @IsOptional()
+  @IsString()
+  merchantAddress?: string;
 }
