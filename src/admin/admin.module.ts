@@ -1,26 +1,49 @@
-import { Logger, Module, OnModuleInit } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
+import { Logger, Module, OnModuleInit, forwardRef } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { MongooseModule } from '@nestjs/mongoose';
 
 import { AuthModule } from '../auth/auth.module';
+import { CommonModule } from '../common/common.module';
+
 import { User, UserSchema } from '../user/schema/user.schema';
+import { UserFile, UserFileSchema } from '../user/schema/document.schema';
+import { DocumentService } from '../user/services/document.service';
+
 import { AdminAuthController } from './admin-auth.controller';
 import { AdminUserController } from './admin-user.controller';
+import { AdminDocumentsController } from './admin-documents.controller'; 
 import { AdminUserService } from './admin-user.service';
 import { AdminService } from './admin.service';
 import { Admin, AdminSchema } from './schema/admin.schema';
 
 @Module({
   imports: [
+   
+    ConfigModule,
     MongooseModule.forFeature([
       { name: Admin.name, schema: AdminSchema },
       { name: User.name, schema: UserSchema },
+      { name: UserFile.name, schema: UserFileSchema },
     ]),
-    AuthModule,
+    forwardRef(() => CommonModule),
+    forwardRef(() => AuthModule),
   ],
-  controllers: [AdminAuthController, AdminUserController],
-  providers: [AdminService, AdminUserService],
-  exports: [AdminService],
+  controllers: [
+    AdminAuthController,
+    AdminUserController,
+    AdminDocumentsController, 
+  ],
+  providers: [
+    AdminService,
+    AdminUserService,
+    DocumentService, 
+  ],
+  exports: [
+    AdminService,
+    AdminUserService,
+    DocumentService,
+    MongooseModule, 
+  ],
 })
 export class AdminModule implements OnModuleInit {
   private readonly logger = new Logger(AdminModule.name);

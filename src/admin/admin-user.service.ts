@@ -37,10 +37,7 @@ export class AdminUserService {
       await fs.rm(dir, { recursive: true, force: true });
       this.logger.log(`Папка пользователя удалена: ${dir}`);
     } catch (e) {
-      this.logger.error(
-        `Не удалось удалить папку пользователя: ${dir}`,
-        e as any,
-      );
+      this.logger.error(`Не удалось удалить папку пользователя: ${dir}`, e as any);
     }
   }
 
@@ -51,26 +48,21 @@ export class AdminUserService {
       query.email = { $regex: filter.email, $options: 'i' };
     }
     if (filter?.role) {
+      // массив ролей в Mongo матчится строкой, этого достаточно; можно и { $in: [filter.role] }
       query.roles = filter.role;
     }
     if (filter?.verificationStatus) {
       query.verificationStatus = filter.verificationStatus as any;
     }
-    if (
-      typeof filter?.balanceFrom === 'number' ||
-      typeof filter?.balanceTo === 'number'
-    ) {
+    if (typeof filter?.balanceFrom === 'number' || typeof filter?.balanceTo === 'number') {
       const balanceQuery: Record<string, number> = {};
-      if (typeof filter.balanceFrom === 'number')
-        balanceQuery.$gte = filter.balanceFrom;
-      if (typeof filter.balanceTo === 'number')
-        balanceQuery.$lte = filter.balanceTo;
+      if (typeof filter.balanceFrom === 'number') balanceQuery.$gte = filter.balanceFrom;
+      if (typeof filter.balanceTo === 'number') balanceQuery.$lte = filter.balanceTo;
       query.balance = balanceQuery as any;
     }
     if (filter?.createdFrom || filter?.createdTo) {
       const createdAtQuery: Record<string, Date> = {};
-      if (filter.createdFrom)
-        createdAtQuery.$gte = new Date(filter.createdFrom);
+      if (filter.createdFrom) createdAtQuery.$gte = new Date(filter.createdFrom);
       if (filter.createdTo) createdAtQuery.$lte = new Date(filter.createdTo);
       query.createdAt = createdAtQuery as any;
     }
@@ -103,31 +95,44 @@ export class AdminUserService {
     const user = await this.userModel.findById(id);
     if (!user) throw new NotFoundException('Пользователь не найден');
 
+    // чувствительные поля
     if (dto.password) {
       user.password = await bcrypt.hash(dto.password, 10);
     }
 
+    // финансы / флаги
     if (dto.balance !== undefined) user.balance = dto.balance as any;
     if (dto.balanceBTC !== undefined) user.balanceBTC = dto.balanceBTC as any;
-    if (dto.isTransactionAllowed !== undefined)
-      user.isTransactionAllowed = dto.isTransactionAllowed;
-    if (dto.showBTCBalance !== undefined)
-      user.showBTCBalance = dto.showBTCBalance;
+    if (dto.isTransactionAllowed !== undefined) user.isTransactionAllowed = dto.isTransactionAllowed;
+    if (dto.showBTCBalance !== undefined) user.showBTCBalance = dto.showBTCBalance;
 
+    // базовая анкета
     if (dto.firstName !== undefined) user.firstName = dto.firstName;
     if (dto.lastName !== undefined) user.lastName = dto.lastName;
     if (dto.email !== undefined) user.email = dto.email;
     if (dto.phone !== undefined) user.phone = dto.phone;
     if (dto.country !== undefined) user.country = dto.country;
-    if (dto.walletBTCAddress !== undefined)
-      user.walletBTCAddress = dto.walletBTCAddress;
+
+    // платёжные реквизиты
+    if (dto.walletBTCAddress !== undefined) user.walletBTCAddress = dto.walletBTCAddress;
     if (dto.paypalAddress !== undefined) user.paypalAddress = dto.paypalAddress;
+    if (dto.merchantAddress !== undefined) user.merchantAddress = dto.merchantAddress;
 
-    if (dto.wireTransfer)
-      user.wireTransfer = { ...user.wireTransfer, ...dto.wireTransfer };
-    if (dto.zelleTransfer)
-      user.zelleTransfer = { ...user.zelleTransfer, ...dto.zelleTransfer };
+    // согласие с условиями (админ может выставить вручную)
+    if ((dto as any).isTermsAccepted !== undefined) {
+      user.isTermsAccepted = (dto as any).isTermsAccepted;
+    }
 
+    // роли (опционально, если захотите разрешить)
+    if ((dto as any).roles !== undefined) {
+      user.roles = (dto as any).roles;
+    }
+
+    // bank/zelle
+    if (dto.wireTransfer) user.wireTransfer = { ...user.wireTransfer, ...dto.wireTransfer };
+    if (dto.zelleTransfer) user.zelleTransfer = { ...user.zelleTransfer, ...dto.zelleTransfer };
+
+    // верификация
     if (dto.verificationStatus !== undefined) {
       const oldStatus = user.verificationStatus;
       const newStatus = dto.verificationStatus;
@@ -141,7 +146,8 @@ export class AdminUserService {
       }
     }
 
-    return user.save();
+    const saved = await user.save({ validateModifiedOnly: true });
+    return saved.toObject();
   }
 
   async deleteUser(id: string): Promise<{ message: string }> {
@@ -149,7 +155,6 @@ export class AdminUserService {
     if (!result) throw new NotFoundException('Пользователь не найден');
 
     await this.removeUserDir(id);
-
     return { message: 'Пользователь удалён' };
   }
 }
