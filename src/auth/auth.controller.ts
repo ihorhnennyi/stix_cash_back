@@ -19,23 +19,28 @@ export class AuthController {
   @Get('verify-email')
   @HttpCode(200)
   @ApiOperation({ summary: 'Подтвердить email по одноразовому токену' })
-  @ApiQuery({ name: 'token', required: true })
-  @ApiOkResponse({ description: 'Редирект на фронт с результатом' })
+  @ApiQuery({ name: 'token', required: true, description: 'JWT токен подтверждения email' })
+  @ApiOkResponse({ description: 'Редирект на фронт с результатом подтверждения' })
   async verifyEmail(@Query('token') token: string, @Res() res: Response) {
-    const payload = this.emailVerify.verify(token)
-    const user = await this.userModel.findById(payload.sub)
-
     const front = this.config.get<string>('FRONT_URL') ?? '/'
+    try {
+      const payload = this.emailVerify.verify(token)
+      const user = await this.userModel.findById(payload.sub)
 
-    if (!user) {
-      return res.redirect(`${front}/verify-email?status=not_found`)
+      if (!user || user.email !== payload.email) {
+        return res.redirect(`${front}/verify-email?status=not_found`)
+      }
+
+      if (!user.emailVerified) {
+        user.emailVerified = true
+        user.emailVerifiedAt = new Date()
+        await user.save({ validateModifiedOnly: true })
+      }
+
+      return res.redirect(`${front}/verify-email?status=ok`)
+    } catch (err) {
+      console.error('[AuthController] verify-email error:', err)
+      return res.redirect(`${front}/verify-email?status=invalid`)
     }
-
-    if (user.verificationStatus !== 'verified') {
-      user.verificationStatus = 'verified'
-      await user.save({ validateModifiedOnly: true })
-    }
-
-    return res.redirect(`${front}/verify-email?status=ok`)
   }
 }

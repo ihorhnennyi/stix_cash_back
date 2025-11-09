@@ -1,99 +1,93 @@
-import { ApiPropertyOptional, PartialType } from "@nestjs/swagger";
-import { Type } from "class-transformer";
-import {
-  IsBoolean,
-  IsIn,
-  IsOptional,
-  IsString,
-  ValidateNested,
-} from "class-validator";
-import { CreateUserDto } from "./create-user.dto";
-import { WireTransferDto, ZelleTransferDto } from "./transfer-info.dto";
+import { ApiPropertyOptional, PartialType } from '@nestjs/swagger'
+import { Type } from 'class-transformer'
+import { IsBoolean, IsIn, IsOptional, IsString, ValidateNested } from 'class-validator'
+import { CreateUserDto } from './create-user.dto'
+import { WireTransferDto, ZelleTransferDto } from './transfer-info.dto'
 
-const VERIFICATION_STATUSES = ["unverified", "pending", "verified"] as const;
-type VerificationStatus = (typeof VERIFICATION_STATUSES)[number];
+const KYC_STATUSES = ['unverified', 'pending', 'verified'] as const
+type KycStatus = (typeof KYC_STATUSES)[number]
 
 export class UpdateUserDto extends PartialType(CreateUserDto) {
   @ApiPropertyOptional({
-    example: "1A2b3CbtcAddressHere",
-    description: "Bitcoin wallet address",
+    example: '1A2b3CbtcAddressHere',
+    description: 'Bitcoin wallet address'
   })
   @IsOptional()
   @IsString()
-  walletBTCAddress?: string;
+  walletBTCAddress?: string
 
   @ApiPropertyOptional({
-    example: "paypal@example.com",
-    description: "PayPal email address",
+    example: 'paypal@example.com',
+    description: 'PayPal email address'
   })
   @IsOptional()
   @IsString()
-  paypalAddress?: string;
+  paypalAddress?: string
 
   @ApiPropertyOptional({
-    description: "Wire transfer information",
-    type: () => WireTransferDto,
+    description: 'Wire transfer information',
+    type: () => WireTransferDto
   })
   @IsOptional()
   @ValidateNested()
   @Type(() => WireTransferDto)
-  wireTransfer?: WireTransferDto;
+  wireTransfer?: WireTransferDto
 
   @ApiPropertyOptional({
-    description: "Zelle transfer information",
-    type: () => ZelleTransferDto,
+    description: 'Zelle transfer information',
+    type: () => ZelleTransferDto
   })
   @IsOptional()
   @ValidateNested()
   @Type(() => ZelleTransferDto)
-  zelleTransfer?: ZelleTransferDto;
+  zelleTransfer?: ZelleTransferDto
 
   @ApiPropertyOptional({
     example: false,
-    description: "Show balance in BTC?",
+    description: 'Show balance in BTC?'
   })
   @IsOptional()
   @IsBoolean()
-  showBTCBalance?: boolean;
+  showBTCBalance?: boolean
 
   @IsOptional()
   @IsString()
-  balance?: string;
+  balance?: string
 
   @IsOptional()
   @IsString()
-  balanceBTC?: string;
+  balanceBTC?: string
 
   @ApiPropertyOptional({
-    example: "newAdminPassword123",
-    description: "New user password",
+    example: 'newAdminPassword123',
+    description: 'New user password'
   })
   @IsOptional()
   @IsString()
-  password?: string;
+  password?: string
 
   @ApiPropertyOptional({
     example: true,
-    description: "Разрешить пользователю выполнять транзакции",
+    description: 'Разрешить пользователю выполнять транзакции'
   })
   @IsOptional()
   @IsBoolean()
-  isTransactionAllowed?: boolean;
+  isTransactionAllowed?: boolean
 
   @ApiPropertyOptional({
-    example: "pending",
-    enum: VERIFICATION_STATUSES,
-    description: "User verification status",
+    example: 'pending',
+    enum: KYC_STATUSES,
+    description: 'KYC status (документы): unverified | pending | verified'
   })
   @IsOptional()
-  @IsIn(VERIFICATION_STATUSES)
-  verificationStatus?: VerificationStatus;
+  @IsIn(KYC_STATUSES)
+  kycStatus?: KycStatus
 
   @ApiPropertyOptional({
-    example: "123 Main St, Apt 4B, New York, NY",
-    description: "Merchant address",
+    example: '123 Main St, Apt 4B, New York, NY',
+    description: 'Merchant address'
   })
   @IsOptional()
   @IsString()
-  merchantAddress?: string;
+  merchantAddress?: string
 }

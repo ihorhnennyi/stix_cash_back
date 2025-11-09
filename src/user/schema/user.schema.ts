@@ -1,55 +1,60 @@
-import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose';
-import * as fs from 'fs/promises';
-import { Document, Types } from 'mongoose';
-import * as path from 'path';
+import { Prop, Schema, SchemaFactory } from '@nestjs/mongoose'
+import * as fs from 'fs/promises'
+import { Document, Types } from 'mongoose'
+import * as path from 'path'
 
-export type UserDocument = User & Document & { _id: Types.ObjectId };
+export type UserDocument = User & Document & { _id: Types.ObjectId }
 
 @Schema({ timestamps: true })
 export class User {
   @Prop({ required: true })
-  firstName: string;
+  firstName: string
 
   @Prop({ required: true })
-  lastName: string;
+  lastName: string
 
   @Prop({ required: true, unique: true, index: true })
-  email: string;
+  email: string
 
   @Prop({ required: true })
-  phone: string;
+  phone: string
 
   @Prop({ required: true })
-  country: string;
+  country: string
 
   @Prop({ required: true })
-  password: string;
+  password: string
 
-  // Пользователь должен явно принять условия → required: true (без default)
   @Prop({ required: true })
-  isTermsAccepted: boolean;
+  isTermsAccepted: boolean
 
   @Prop({ type: [String], default: ['user'] })
-  roles: string[];
+  roles: string[]
+
+  @Prop({ type: Boolean, default: false })
+  emailVerified: boolean
+
+  @Prop({ type: Date, default: null })
+  emailVerifiedAt: Date | null
 
   @Prop({
     type: String,
     enum: ['unverified', 'pending', 'verified'],
-    default: 'unverified',
+    default: 'unverified'
   })
-  verificationStatus: 'unverified' | 'pending' | 'verified';
+  kycStatus: 'unverified' | 'pending' | 'verified'
 
   @Prop({ type: String, default: '0' })
-  balance: string;
+  balance: string
 
   @Prop({ type: String, default: '0' })
-  balanceBTC: string;
+  balanceBTC: string
 
   @Prop({ default: false })
-  showBTCBalance: boolean;
+  showBTCBalance: boolean
 
   @Prop({ default: false })
-  isTransactionAllowed: boolean;
+  isTransactionAllowed: boolean
 
   @Prop({
     type: [
@@ -58,28 +63,24 @@ export class User {
         type: { type: String, enum: ['deposit', 'withdrawal'], required: true },
         amount: { type: String, required: true },
         currency: { type: String, enum: ['USD', 'BTC'], required: true },
-        status: {
-          type: String,
-          enum: ['pending', 'completed', 'failed'],
-          required: true,
-        },
-      },
+        status: { type: String, enum: ['pending', 'completed', 'failed'], required: true }
+      }
     ],
-    default: [],
+    default: []
   })
   transactions: {
-    date: Date;
-    type: 'deposit' | 'withdrawal';
-    amount: string;
-    currency: 'USD' | 'BTC';
-    status: 'pending' | 'completed' | 'failed';
-  }[];
+    date: Date
+    type: 'deposit' | 'withdrawal'
+    amount: string
+    currency: 'USD' | 'BTC'
+    status: 'pending' | 'completed' | 'failed'
+  }[]
 
   @Prop({ default: '' })
-  walletBTCAddress: string;
+  walletBTCAddress: string
 
   @Prop({ default: '' })
-  paypalAddress: string;
+  paypalAddress: string
 
   @Prop({
     type: {
@@ -88,65 +89,69 @@ export class User {
       accountNumber: { type: String, default: '' },
       routingNumber: { type: String, default: '' },
       bankName: { type: String, default: '' },
-      address: { type: String, default: '' },
+      address: { type: String, default: '' }
     },
-    default: {},
+    default: {}
   })
   wireTransfer: {
-    firstName: string;
-    lastName: string;
-    accountNumber: string;
-    routingNumber: string;
-    bankName: string;
-    address: string;
-  };
+    firstName: string
+    lastName: string
+    accountNumber: string
+    routingNumber: string
+    bankName: string
+    address: string
+  }
 
   @Prop({
     type: {
       recipientName: { type: String, default: '' },
       email: { type: String, default: '' },
-      phone: { type: String, default: '' },
+      phone: { type: String, default: '' }
     },
-    default: {},
+    default: {}
   })
   zelleTransfer: {
-    recipientName: string;
-    email: string;
-    phone: string;
-  };
+    recipientName: string
+    email: string
+    phone: string
+  }
 
   @Prop({ default: '' })
-  backendFolderPath: string;
+  backendFolderPath: string
 
-  // Новое поле
   @Prop({ default: '' })
-  merchantAddress: string;
+  merchantAddress: string
 }
 
-export const UserSchema = SchemaFactory.createForClass(User);
+export const UserSchema = SchemaFactory.createForClass(User)
 
-/**
- * Гарантированно создаём папку пользователя и прописываем backendFolderPath
- * до сохранения, без повторного save() (чтобы избежать рекурсии).
- */
 UserSchema.pre('save', async function (next) {
   try {
-    const doc = this as UserDocument;
+    const doc = this as UserDocument & { verificationStatus?: string }
 
-    const root =
-      process.env.USER_FILES_ROOT ||
-      path.resolve(process.cwd(), 'storage/users');
-
-    const userDir = path.join(root, doc._id.toString());
-    await fs.mkdir(userDir, { recursive: true });
-
-    if (!doc.backendFolderPath || doc.backendFolderPath !== userDir) {
-      doc.backendFolderPath = userDir;
+    // --- Мягкая миграция со старого поля ---
+    if (!doc.kycStatus && doc.verificationStatus) {
+      // переносим старое значение в новое поле
+      const v = doc.verificationStatus
+      if (v === 'unverified' || v === 'pending' || v === 'verified') {
+        // @ts-ignore — присваиваем на лету
+        doc.kycStatus = v
+      }
+      // @ts-ignore — подчистим в рантайме
+      doc.verificationStatus = undefined
     }
 
-    next();
+    const root = process.env.USER_FILES_ROOT || path.resolve(process.cwd(), 'storage/users')
+    const userDir = path.join(root, doc._id.toString())
+    await fs.mkdir(userDir, { recursive: true })
+
+    if (!doc.backendFolderPath || doc.backendFolderPath !== userDir) {
+      doc.backendFolderPath = userDir
+    }
+
+    next()
   } catch (e) {
-    console.error('[UserSchema] create dir error:', e);
-    next();
+    console.error('[UserSchema] create dir error:', e)
+    next()
   }
-});
+})

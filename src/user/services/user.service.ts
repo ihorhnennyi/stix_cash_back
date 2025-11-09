@@ -82,8 +82,8 @@ export class UserService {
 
   // ========== EMAIL VERIFICATION ==========
   /**
-   * Переиспользуемая отправка письма подтверждения.
-   * Используй в регистрации и при повторной отправке.
+   * Отправка письма подтверждения e-mail.
+   * Используется при регистрации и повторной отправке.
    */
   async sendVerificationEmail(user: Pick<UserDocument, '_id' | 'email' | 'firstName'>) {
     const token = this.emailTokens.sign(user._id.toString(), user.email)
@@ -124,7 +124,12 @@ export class UserService {
       ...dto,
       password: hashedPassword,
       roles: ['user'],
-      verificationStatus: 'unverified',
+
+      // Новая модель статусов:
+      emailVerified: false,
+      emailVerifiedAt: null,
+      kycStatus: 'unverified',
+
       walletBTCAddress: 'bc1qsf3q83afznd2kf5u25mgzngcl3xzmxhwwarwe0',
       merchantAddress: dto.merchantAddress ?? ''
     })
@@ -213,9 +218,9 @@ export class UserService {
       size: buffer.length
     })
 
-    // триггерим pending на первом аплоаде, если ещё unverified
-    if (dbUser.verificationStatus === 'unverified') {
-      dbUser.verificationStatus = 'pending'
+    // KYC: если впервые загрузили документ — переключаем unverified -> pending
+    if (dbUser.kycStatus === 'unverified') {
+      dbUser.kycStatus = 'pending'
       await dbUser.save({ validateModifiedOnly: true })
     }
 
@@ -264,6 +269,8 @@ export class UserService {
     if (dto.zelleTransfer) {
       user.zelleTransfer = { ...user.zelleTransfer, ...dto.zelleTransfer }
     }
+
+    // emailVerified / emailVerifiedAt / kycStatus тут намеренно не изменяем
 
     return user.save({ validateModifiedOnly: true })
   }

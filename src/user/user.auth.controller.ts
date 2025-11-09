@@ -39,7 +39,6 @@ export class UserAuthController {
   })
   async register(@Body() dto: CreateUserDto) {
     const user = await this.userService.createUser(dto)
-
     if (!user) {
       throw new ConflictException('Не удалось создать пользователя')
     }
@@ -119,8 +118,9 @@ export class UserAuthController {
     return this.authService.refreshTokens(body.refreshToken)
   }
 
-  @Post('resend-verification')
-  @ApiOperation({ summary: 'Повторная отправка письма подтверждения' })
+  /** ===== Новая конечная точка: повторная отправка письма для подтверждения email ===== */
+  @Post('resend-email-verification')
+  @ApiOperation({ summary: 'Повторная отправка письма подтверждения email' })
   @ApiBody({
     schema: {
       type: 'object',
@@ -132,16 +132,34 @@ export class UserAuthController {
     status: 200,
     description: 'Письмо отправлено (если пользователь найден)'
   })
-  async resendVerification(@Body() body: { email: string }) {
+  async resendEmailVerification(@Body() body: { email: string }) {
     const user = await this.userModel.findOne({ email: body.email })
     if (!user) {
       return { ok: true, message: 'Если такой email существует, письмо отправлено' }
     }
-    if (user.verificationStatus === 'verified') {
+    if (user.emailVerified) {
       return { ok: true, message: 'Email уже подтверждён' }
     }
 
     await this.userService.sendVerificationEmail(user)
     return { ok: true, message: 'Письмо отправлено' }
+  }
+
+  /** ===== Совместимость: старый роут (алиас), проксирует на новый ===== */
+  @Post('resend-verification')
+  @ApiOperation({ summary: '[DEPRECATED] Повторная отправка письма подтверждения email' })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: { email: { type: 'string', example: 'user@example.com' } },
+      required: ['email']
+    }
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Письмо отправлено (если пользователь найден)'
+  })
+  async resendVerificationAlias(@Body() body: { email: string }) {
+    return this.resendEmailVerification(body)
   }
 }
